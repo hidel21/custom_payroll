@@ -1,3 +1,5 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_commission_settlement_wizard_manager,commission.settlement.wizard.manager,model_commission_settlement_wizard,om_hr_payroll.group_hr_payroll_manager,1,1,1,0
 access_commission_settlement_wizard_user,commission.settlement.wizard.user,model_commission_settlement_wizard,om_hr_payroll.group_hr_payroll_user,1,1,1,0
+access_commission_report_wizard_manager,commission.report.wizard.manager,model_commission_report_wizard,om_hr_payroll.group_hr_payroll_manager,1,1,1,0
+access_commission_report_wizard_user,commission.report.wizard.user,model_commission_report_wizard,om_hr_payroll.group_hr_payroll_user,1,1,1,0

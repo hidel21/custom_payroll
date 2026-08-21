@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="commission_pdf">
+        <t t-call="web.html_container">
+            <t t-call="web.internal_layout">
+                <div class="page">
+
+                    <style>
+                        .rc { width: 100%; border-collapse: collapse;
+                              font-size: 8.5px; }
+                        .rc th { background: #E5ECEA; color: #33463F;
+                                 text-align: left; padding: 3px 4px;
+                                 border-bottom: 1px solid #CFDBD8;
+                                 font-size: 7.5px; text-transform: uppercase; }
+                        .rc td { padding: 3px 4px;
+                                 border-bottom: 1px solid #EEF3F2;
+                                 vertical-align: top; }
+                        .rc td.n, .rc th.n { text-align: right; }
+                        .rc tr.emp td { background: #F4F8F7; font-weight: bold;
+                                        border-top: 1px solid #CFDBD8;
+                                        font-size: 9px; }
+                        .rc tr.sub td { font-weight: bold;
+                                        border-top: 1px solid #CFDBD8; }
+                        .rc tr.tot td { font-weight: bold; font-size: 9.5px;
+                                        border-top: 2px solid #1D5F5A;
+                                        background: #F4F8F7; }
+                        .cab { border-bottom: 2px solid #10201D;
+                               padding-bottom: 5px; margin-bottom: 8px; }
+                        .cab h2 { margin: 0; font-size: 15px; color: #10201D; }
+                        .cab .cri { font-size: 8.5px; color: #4E5F5B;
+                                    margin-top: 2px; }
+                    </style>
+
+                    <div class="cab">
+                        <h2>Reporte de Comisiones</h2>
+                        <div class="cri">
+                            <span t-out="criterios"/>
+                            <span> · </span>
+                            <span t-out="len(docs)"/> comisión(es)
+                        </div>
+                    </div>
+
+                    <table class="rc">
+                        <thead>
+                            <tr>
+                                <th>Cliente</th>
+                                <th>Factura</th>
+                                <th>Periodo</th>
+                                <th class="n">Sec.</th>
+                                <th>F. factura</th>
+                                <th>F. pago</th>
+                                <th>F. liquidación</th>
+                                <th>Concepto</th>
+                                <th class="n">Base</th>
+                                <th class="n">%</th>
+                                <th>Porcentajes</th>
+                                <th class="n">Comisión</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="grupos" t-as="g">
+                                <tr class="emp">
+                                    <td colspan="8">
+                                        <span t-out="g['empleado'].name"/>
+                                        <span> — </span>
+                                        <span t-out="g['empleado'].department_id.name or 'sin departamento'"/>
+                                        <span> · </span>
+                                        <span t-out="len(g['lineas'])"/> comisión(es)
+                                    </td>
+                                    <td class="n" t-out="g['base']"
+                                        t-options='{"widget": "float", "precision": 2}'/>
+                                    <td colspan="2"/>
+                                    <td class="n" t-out="g['importe']"
+                                        t-options='{"widget": "float", "precision": 2}'/>
+                                    <td/>
+                                </tr>
+                                <tr t-foreach="g['lineas']" t-as="l">
+                                    <td t-out="l.partner_id.name"/>
+                                    <td t-out="l.invoice_id.name"/>
+                                    <td t-out="l.commission_period_name or ''"/>
+                                    <td class="n" t-out="l.commission_sequence or ''"/>
+                                    <td t-out="l.invoice_date"
+                                        t-options='{"widget": "date"}'/>
+                                    <td t-out="l.payment_date_invoice"
+                                        t-options='{"widget": "date"}'/>
+                                    <td t-out="l.settlement_date"
+                                        t-options='{"widget": "date"}'/>
+                                    <td t-out="l.concept_summary or ''"/>
+                                    <td class="n" t-out="l.commission_base"
+                                        t-options='{"widget": "float", "precision": 2}'/>
+                                    <td class="n" t-out="l.effective_percentage"
+                                        t-options='{"widget": "float", "precision": 2}'/>
+                                    <td t-out="l.percentage_summary or ''"/>
+                                    <td class="n" t-out="l.commission_amount"
+                                        t-options='{"widget": "float", "precision": 2}'/>
+                                    <td t-out="etiquetas.get(l.state, l.state)"/>
+                                </tr>
+                            </t>
+                            <tr class="tot">
+                                <td colspan="8">TOTAL</td>
+                                <td class="n" t-out="total_base"
+                                    t-options='{"widget": "float", "precision": 2}'/>
+                                <td colspan="2"/>
+                                <td class="n" t-out="total_importe"
+                                    t-options='{"widget": "float", "precision": 2}'/>
+                                <td/>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <p style="font-size: 7.5px; color: #6C7C78; margin-top: 8px;">
+                        La base y la comisión se suman; la secuencia y el
+                        porcentaje efectivo no, porque sumarlos no significa
+                        nada. El porcentaje efectivo es la comisión dividida
+                        entre la base de cada línea.
+                    </p>
+
+                </div>
+            </t>
+        </t>
+    </template>
+
+</odoo>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Horizontal y con márgenes cortos: son diecisiete columnas y en vertical
+         no caben sin apretarlas hasta volverlas ilegibles. -->
+    <record id="paperformat_commission" model="report.paperformat">
+        <field name="name">Comisiones, horizontal</field>
+        <field name="default" eval="False"/>
+        <field name="format">A4</field>
+        <field name="orientation">Landscape</field>
+        <field name="margin_top">12</field>
+        <field name="margin_bottom">12</field>
+        <field name="margin_left">7</field>
+        <field name="margin_right">7</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">8</field>
+        <field name="dpi">90</field>
+    </record>
+
+    <record id="action_report_commission_pdf" model="ir.actions.report">
+        <field name="name">Reporte de Comisiones (PDF)</field>
+        <field name="model">invoice.commission.line</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">custom_payroll.commission_pdf</field>
+        <field name="report_file">custom_payroll.commission_pdf</field>
+        <field name="paperformat_id" ref="paperformat_commission"/>
+        <field name="binding_model_id" ref="intelli_commision.model_invoice_commission_line"/>
+        <field name="binding_type">report</field>
+        <field name="binding_view_types">list</field>
+    </record>
+
+    <record id="action_report_commission_xlsx" model="ir.actions.report">
+        <field name="name">Reporte de Comisiones (Excel)</field>
+        <field name="model">invoice.commission.line</field>
+        <field name="report_type">xlsx</field>
+        <field name="report_name">custom_payroll.commission_xlsx</field>
+        <field name="report_file">reporte_comisiones</field>
+        <field name="binding_model_id" ref="intelli_commision.model_invoice_commission_line"/>
+        <field name="binding_type">report</field>
+        <field name="binding_view_types">list</field>
+    </record>
+
+</odoo>

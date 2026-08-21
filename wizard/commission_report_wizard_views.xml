@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_commission_report_wizard_form" model="ir.ui.view">
+        <field name="name">commission.report.wizard.form</field>
+        <field name="model">commission.report.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Generar reporte de comisiones">
+                <group>
+                    <group string="Periodo">
+                        <field name="date_from"/>
+                        <field name="date_to"/>
+                    </group>
+                    <group string="Situación y formato">
+                        <field name="situacion" widget="radio"/>
+                        <field name="formato" widget="radio"/>
+                    </group>
+                </group>
+                <group string="Acotar (dejar vacío incluye todo)">
+                    <group>
+                        <field name="company_ids" widget="many2many_tags"
+                               options="{'no_create': True}"/>
+                        <field name="department_ids" widget="many2many_tags"
+                               options="{'no_create': True}"/>
+                    </group>
+                    <group>
+                        <field name="employee_ids" widget="many2many_tags"
+                               options="{'no_create': True}"/>
+                        <field name="partner_ids" widget="many2many_tags"
+                               options="{'no_create': True}"/>
+                    </group>
+                </group>
+
+                <div class="alert alert-info" role="status">
+                    Saldrán
+                    <b><field name="line_count" class="oe_inline" readonly="1"/></b>
+                    comisión(es) con estos criterios.
+                </div>
+
+                <footer>
+                    <button name="action_generate" type="object"
+                            string="Generar" class="btn-primary" data-hotkey="q"/>
+                    <button string="Cancelar" class="btn-secondary"
+                            special="cancel" data-hotkey="x"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_commission_report_wizard" model="ir.actions.act_window">
+        <field name="name">Generar reporte de comisiones</field>
+        <field name="res_model">commission.report.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_commission_report_wizard_form"/>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_commission_report_wizard"
+              name="Generar reporte de comisiones"
+              parent="hr.hr_menu_hr_reports"
+              action="action_commission_report_wizard"
+              groups="om_hr_payroll.group_hr_payroll_user"
+              sequence="22"/>
+
+</odoo>
