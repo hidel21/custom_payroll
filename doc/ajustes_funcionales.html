@@ -1,0 +1,334 @@
+<title>Ajustes de comisiones y nómina</title>
+<style>
+  @page { size: A4; margin: 18mm 15mm 20mm 15mm; }
+
+  body { font-family: "DejaVu Sans", "Helvetica Neue", Arial, sans-serif;
+         font-size: 10.5pt; line-height: 1.55; color: #1B2220; background: #FFFFFF;
+         margin: 0; }
+  .doc { max-width: 46em; margin: 0 auto; }
+
+  h1 { font-family: Georgia, "Times New Roman", serif; font-weight: normal;
+       font-size: 25pt; line-height: 1.1; margin: 0 0 6pt; color: #10201D;
+       letter-spacing: -0.3pt; }
+  .sub { font-size: 12pt; color: #4E5F5B; margin: 0 0 14pt; }
+  .eyebrow { font-size: 8pt; letter-spacing: 1.6pt; text-transform: uppercase;
+             color: #1D5F5A; margin: 0 0 8pt; font-weight: bold; }
+
+  .meta { border-top: 2pt solid #10201D; border-bottom: 1pt solid #CFDBD8;
+          padding: 8pt 0; margin-bottom: 20pt; font-size: 9pt; color: #4E5F5B; }
+  .meta td { padding: 2pt 18pt 2pt 0; vertical-align: top; }
+  .meta b { color: #1B2220; font-weight: bold; }
+
+  h2 { font-family: Georgia, "Times New Roman", serif; font-weight: normal;
+       font-size: 16pt; margin: 22pt 0 4pt; color: #10201D;
+       page-break-after: avoid; }
+  h2 .n { font-size: 8.5pt; letter-spacing: 1.4pt; text-transform: uppercase;
+          color: #1D5F5A; display: block; margin-bottom: 3pt; font-family: Arial, sans-serif;
+          font-weight: bold; }
+  h3 { font-size: 10.5pt; margin: 14pt 0 4pt; color: #10201D;
+       page-break-after: avoid; }
+  p { margin: 0 0 8pt; }
+
+  table.datos { border-collapse: collapse; width: 100%; margin: 8pt 0 12pt;
+                font-size: 9.5pt; page-break-inside: avoid; }
+  table.datos th { background: #E5ECEA; color: #33463F; text-align: left;
+                   padding: 5pt 7pt; border-bottom: 1pt solid #CFDBD8;
+                   font-size: 8pt; letter-spacing: 0.6pt; text-transform: uppercase; }
+  table.datos td { padding: 5pt 7pt; border-bottom: 0.5pt solid #DEE7E4;
+                   vertical-align: top; }
+  table.datos td.num { text-align: right; }
+  .listo { color: #1B6B4C; font-weight: bold; }
+  .falta { color: #9B2C2C; font-weight: bold; }
+  .curso { color: #8A5A0F; font-weight: bold; }
+
+  .caja { border: 1pt solid #CFDBD8; border-left: 3pt solid #1D5F5A;
+          background: #F4F8F7; padding: 9pt 11pt; margin: 10pt 0;
+          page-break-inside: avoid; }
+  .caja.aviso { border-left-color: #8A5A0F; background: #FBF6EC; }
+  .caja p { margin: 0 0 5pt; font-size: 9.5pt; }
+  .caja p:last-child { margin: 0; }
+  .caja h3 { margin: 0 0 4pt; }
+
+  .flujo { border: 1pt solid #CFDBD8; background: #F4F8F7; padding: 10pt;
+           font-family: "DejaVu Sans Mono", monospace; font-size: 8.5pt;
+           line-height: 1.7; margin: 10pt 0; page-break-inside: avoid;
+           color: #33463F; }
+  .flujo b { color: #10201D; }
+
+  ol, ul { margin: 0 0 10pt; padding-left: 16pt; }
+  li { margin-bottom: 4pt; }
+  b.ui { background: #EEF3F2; padding: 0 3pt; }
+
+  .pie { margin-top: 22pt; border-top: 1pt solid #CFDBD8; padding-top: 8pt;
+         font-size: 8.5pt; color: #6C7C78; }
+  .firma { border: 1pt solid #CFDBD8; margin-top: 14pt; }
+  .firma td { padding: 10pt 10pt 22pt; border-right: 0.5pt solid #DEE7E4;
+              font-size: 8pt; letter-spacing: 0.8pt; text-transform: uppercase;
+              color: #6C7C78; }
+</style>
+
+<div class="doc">
+
+<p class="eyebrow">Intelli Next · Comisiones y nómina</p>
+<h1>Ajustes funcionales de comisiones</h1>
+<p class="sub">Qué se pidió en la reunión del 21 de agosto y en qué ha quedado
+cada punto.</p>
+
+<table class="meta">
+  <tr>
+    <td><b>Reunión</b><br/>21 de agosto de 2026</td>
+    <td><b>Participantes</b><br/>Recursos Humanos, Yeny Rengifo,<br/>Xilean Trujillo, Hidelberg Martínez</td>
+    <td><b>Estado</b><br/>Listo en pruebas<br/>Producción: próxima semana</td>
+  </tr>
+</table>
+
+<h2><span class="n">Resumen</span>Lo que se pidió y en qué quedó</h2>
+
+<table class="datos">
+  <tr>
+    <th style="width:47%">Lo que se pidió</th>
+    <th style="width:15%">Estado</th>
+    <th>Dónde se ve</th>
+  </tr>
+  <tr>
+    <td>Un botón para marcar varias comisiones como pagadas, que registre la
+        fecha y las saque de los pendientes</td>
+    <td class="listo">Listo</td>
+    <td>Reporte de Comisiones → Acciones → <b class="ui">Marcar como liquidada</b></td>
+  </tr>
+  <tr>
+    <td>Filtros para ver las comisiones por estado y ocultar las ya pagadas o
+        cerradas</td>
+    <td class="listo">Listo</td>
+    <td>Tres filtros nuevos en el buscador del reporte</td>
+  </tr>
+  <tr>
+    <td>Una columna de fecha de liquidación, distinta de la fecha de pago del
+        cliente</td>
+    <td class="listo">Listo</td>
+    <td>Columna entre <b class="ui">Fecha de Pago</b> y <b class="ui">Moneda</b></td>
+  </tr>
+  <tr>
+    <td>Que los conceptos de comisión se filtren por empresa y departamento,
+        para que no se calculen en cero</td>
+    <td class="listo">Listo</td>
+    <td>Al elegir los parámetros del empleado en la factura</td>
+  </tr>
+  <tr>
+    <td>Cerrar las comisiones ya pagadas para que dejen de entrar en los
+        cálculos de nómina</td>
+    <td class="listo">Listo</td>
+    <td>Se resuelve con el botón de arriba</td>
+  </tr>
+  <tr>
+    <td>Ajuste de las reglas de nómina para que recojan el estado nuevo</td>
+    <td class="listo">Listo</td>
+    <td>Se aplica solo al instalar; ya hecho en pruebas</td>
+  </tr>
+  <tr>
+    <td>Accesos al entorno de pruebas para Valentina Quintero y Lorena Correa</td>
+    <td class="curso">En curso</td>
+    <td>Configuración de usuarios</td>
+  </tr>
+  <tr>
+    <td>Validación funcional por parte de Recursos Humanos</td>
+    <td class="curso">Por hacer</td>
+    <td>Entorno de pruebas</td>
+  </tr>
+</table>
+
+<h2><span class="n">El problema</span>Por qué volvían a aparecer las comisiones ya pagadas</h2>
+
+<p>El sistema sabía cuándo el cliente había pagado la factura, pero no guardaba
+en ninguna parte que la comisión ya se le hubiera pagado al comercial. Lo único
+que lo indicaba era un cambio de estado, y ese cambio dependía de que alguien
+pulsara el botón de generar comprobantes del lote de nómina.</p>
+
+<p>Si ese botón no se pulsaba, la comisión seguía disponible y el cálculo del mes
+siguiente la volvía a incluir. Es exactamente lo que ocurría con las facturas de
+julio que Recursos Humanos señaló en la reunión.</p>
+
+<div class="caja">
+  <h3>El cambio de fondo</h3>
+  <p>Ahora la liquidación deja constancia con una <b>fecha</b>, no con un estado
+     que depende de un botón. Una comisión con fecha de liquidación no vuelve a
+     entrar en ningún cálculo, se pulse lo que se pulse.</p>
+</div>
+
+<h2><span class="n">La base</span>Las dos fechas, que no son lo mismo</h2>
+
+<table class="datos">
+  <tr><th style="width:32%">Fecha</th><th>Qué significa</th><th style="width:26%">Quién la pone</th></tr>
+  <tr>
+    <td><b>Fecha de Pago</b></td>
+    <td>Cuándo pagó <b>el cliente</b> la factura</td>
+    <td>El sistema, al registrarse el pago</td>
+  </tr>
+  <tr>
+    <td><b>Fecha de Liquidación</b></td>
+    <td>Cuándo se le pagó la comisión <b>al comercial</b></td>
+    <td>La nómina, o Recursos Humanos con el botón nuevo</td>
+  </tr>
+</table>
+
+<h2><span class="n">Los estados</span>Cada estado tiene un hecho que lo justifica</h2>
+
+<p>El estado de una comisión ya no se teclea: se deduce. Eso evita que dos
+personas lo interpreten de forma distinta.</p>
+
+<div class="flujo"><b>Borrador</b> → <b>Por Liquidar</b> → <b>Pagada</b> → <b>Liquidada</b> → <b>Cerrada</b>
+                                    <i>y aparte:</i> Fuera de Corte · En Mora</div>
+
+<table class="datos">
+  <tr><th style="width:26%">Estado</th><th>Cuándo lo toma</th></tr>
+  <tr><td><b>Borrador</b></td><td>Se añadió el empleado, pero aún no se ha calculado</td></tr>
+  <tr><td><b>Por Liquidar</b></td><td>Está calculada y el cliente todavía no ha pagado</td></tr>
+  <tr><td><b>Pagada</b></td><td>El cliente pagó la factura. Ya se puede llevar a nómina</td></tr>
+  <tr><td><b>Liquidada</b></td><td>Tiene fecha de liquidación: se le pagó al comercial</td></tr>
+  <tr><td><b>Cerrada</b></td><td>Además, el lote de nómina en el que se pagó está cerrado</td></tr>
+  <tr><td><b>Fuera de Corte</b></td><td>El cliente pagó después del cierre; se liquida en la siguiente</td></tr>
+  <tr><td><b>En Mora</b></td><td>El cliente lleva meses sin pagar. Se marca a mano</td></tr>
+</table>
+
+<p>En el entorno de pruebas, de las 534 comisiones existentes: <b>250 están Por
+Liquidar</b> (el cliente aún no ha pagado) y <b>282 están Pagadas</b>, es decir
+listas para llevar a nómina.</p>
+
+<h2><span class="n">Función nueva</span>Marcar comisiones como liquidadas</h2>
+
+<p>Es lo que Recursos Humanos necesitaba para ponerse al día sin esperar a la
+migración. Se hace en cuatro pasos:</p>
+
+<ol>
+  <li>Entrar en <b class="ui">Empleados → Reportes → Reporte de Comisiones</b>.</li>
+  <li>Filtrar lo que ya se pagó. Lo más cómodo es el filtro
+      <b class="ui">Pendientes de liquidar</b> y después agrupar por empleado.</li>
+  <li>Marcar las casillas de las comisiones que correspondan.</li>
+  <li>Pulsar <b class="ui">Acciones → Marcar como liquidada</b>.</li>
+</ol>
+
+<p>El diálogo dice cuántas se van a marcar, por qué importe, y cuántas de las
+seleccionadas ya estaban liquidadas y no se van a tocar. <b>La fecha es
+editable</b>, con la de hoy por defecto: para registrar las comisiones pagadas
+en julio se pone la fecha de julio.</p>
+
+<div class="caja">
+  <h3>Qué pasa al marcarlas</h3>
+  <p>Pasan a <b>Liquidada</b> con su fecha, desaparecen del filtro de pendientes
+     y dejan de entrar en los cálculos de nómina siguientes. Si el lote en el que
+     están ya se cerró, quedan como <b>Cerrada</b>.</p>
+</div>
+
+<h2><span class="n">Función nueva</span>Los filtros del reporte</h2>
+
+<table class="datos">
+  <tr><th style="width:32%">Filtro</th><th>Para qué sirve</th></tr>
+  <tr><td><b>Pendientes de liquidar</b></td>
+      <td>Lo que el cliente ya pagó y aún no se le ha pagado al comercial. Es la
+          lista de trabajo de cada nómina</td></tr>
+  <tr><td><b>Ya liquidadas</b></td>
+      <td>Lo que ya se pagó, para revisar o auditar sin estorbar en la vista de
+          pendientes</td></tr>
+  <tr><td><b>Calculadas en cero</b></td>
+      <td>Comisiones que se calcularon pero dieron cero. Casi siempre significa
+          que hay un concepto mal elegido</td></tr>
+</table>
+
+<p>Además se puede agrupar por <b>Fecha de Liquidación</b>, que responde de un
+vistazo a «qué se liquidó en cada nómina».</p>
+
+<h2><span class="n">Corrección</span>Por qué algunas comisiones daban cero</h2>
+
+<p>En la reunión se vio que el licenciamiento de software calculaba cero. La
+causa: el concepto elegido para el empleado no tenía tarifa configurada para su
+departamento.</p>
+
+<p>El caso concreto: la empleada está en <b>Costumer Success</b> y tenía marcado
+el concepto «Licenciamiento Software - Año 1», pero ese concepto solo tiene
+tarifa para Dirección Comercial. Para su departamento existían otros tres
+parecidos. Con tres conceptos casi idénticos, es fácil elegir el que no
+corresponde.</p>
+
+<p>Se han hecho dos cosas:</p>
+
+<ul>
+  <li><b>Los conceptos se filtran por empresa y departamento.</b> Ya solo se
+      ofrecen los que de verdad pueden pagar algo en esa factura.</li>
+  <li><b>Si aun así queda alguno sin tarifa, el sistema lo dice.</b> Aparece un
+      aviso en la línea del empleado explicando que ese concepto no suma nada, y
+      sugiere el que sí corresponde. No bloquea: solo avisa.</li>
+</ul>
+
+<p>De las 50 comisiones que en pruebas estaban calculadas en cero, <b>las 50
+explican ahora su motivo</b>.</p>
+
+<h2><span class="n">Caso concreto</span>Las cinco facturas de julio</h2>
+
+<p>Las que Recursos Humanos señaló en la reunión, tal como están hoy en el
+entorno de pruebas:</p>
+
+<table class="datos">
+  <tr><th>Factura</th><th>Fecha de pago del cliente</th><th>Estado</th><th>Fecha de liquidación</th></tr>
+  <tr><td>FV2726</td><td>21-07-2026</td><td>Pagada</td><td>pendiente</td></tr>
+  <tr><td>FV2718</td><td>10-07-2026</td><td>Pagada</td><td>pendiente</td></tr>
+  <tr><td>FV2503</td><td>02-07-2026</td><td>Pagada</td><td>pendiente</td></tr>
+  <tr><td>FV2581</td><td>26-06-2026</td><td>Pagada</td><td>pendiente</td></tr>
+  <tr><td>FV2467</td><td>25-06-2026</td><td>Pagada</td><td>pendiente</td></tr>
+</table>
+
+<p>Las cinco aparecen ahora como <b>Pagadas</b>, que es lo correcto: el cliente
+pagó pero al comercial todavía no se le ha liquidado. Seleccionándolas y usando
+el botón nuevo con fecha de julio, pasan a <b>Liquidadas</b> y salen de los
+cálculos. Probado sobre estas mismas cinco.</p>
+
+<h2><span class="n">Antes de producción</span>Lo que falta</h2>
+
+<div class="caja">
+  <h3>Las reglas de nómina ya quedaron ajustadas</h3>
+  <p>Las dos reglas que calculan las comisiones llevaban su propia copia de la
+     lógica y buscaban un estado que con el circuito nuevo ya no se da. El
+     ajuste se aplica solo al instalar, así que en producción no hay ningún paso
+     manual que recordar.</p>
+  <p>De paso corrige dos cosas que ya fallaban antes: una comisión podía entrar
+     en dos recibos distintos, y una comisión en dólares se sumaba como si
+     fueran pesos.</p>
+  <p>Comprobado en pruebas: un recibo recoge sus 18 comisiones por 1.348.406,84,
+     el recibo siguiente recoge cero de ellas, y al marcarlas como liquidadas
+     dejan de aparecer.</p>
+</div>
+
+<p>Queda dar acceso al entorno de pruebas a Valentina Quintero y Lorena Correa,
+y la validación funcional por parte de Recursos Humanos.</p>
+
+<p>El despliegue a producción se mantiene para la próxima semana, cuando las
+copias de seguridad diarias del servidor lleven varios días funcionando.</p>
+
+<h2><span class="n">Validación</span>Qué conviene probar en el entorno de pruebas</h2>
+
+<ol>
+  <li>Abrir el Reporte de Comisiones y comprobar que aparecen la columna
+      <b>Fecha de Liquidación</b> y los tres filtros nuevos.</li>
+  <li>Filtrar por <b>Pendientes de liquidar</b> y confirmar que salen las
+      comisiones cuyo cliente ya pagó.</li>
+  <li>Marcar las cinco facturas de julio con el botón nuevo, con fecha de julio,
+      y comprobar que pasan a <b>Liquidada</b> y salen del filtro de pendientes.</li>
+  <li>En una factura, añadir un empleado y comprobar que los conceptos ofrecidos
+      son solo los de su departamento y su empresa.</li>
+  <li>Filtrar por <b>Calculadas en cero</b> y revisar el aviso que explica cada
+      caso.</li>
+</ol>
+
+<table class="firma">
+  <tr>
+    <td width="34%">Validado por</td>
+    <td width="22%">Fecha</td>
+    <td>Observaciones</td>
+  </tr>
+</table>
+
+<p class="pie">Documento generado el 21 de agosto de 2026 sobre el entorno de
+pruebas. Los importes de las comisiones los sigue calculando el mismo sistema de
+siempre; estos ajustes cambian cómo se registra la liquidación y cómo se
+consultan, no cuánto se paga.</p>
+
+</div>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_commission_settlement_wizard_form" model="ir.ui.view">
+        <field name="name">commission.settlement.wizard.form</field>
+        <field name="model">commission.settlement.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Marcar como liquidada">
+                <field name="line_ids" invisible="1"/>
+                <field name="currency_id" invisible="1"/>
+
+                <div class="alert alert-info" role="status">
+                    Se marcarán
+                    <b><field name="pending_count" class="oe_inline" readonly="1"/></b>
+                    comisión(es), por un total de
+                    <b><field name="total_amount" class="oe_inline" readonly="1"/></b>.
+                    <span invisible="already_count == 0">
+                        <br/>
+                        <field name="already_count" class="oe_inline" readonly="1"/>
+                        de las seleccionadas ya estaban liquidadas y no se tocan.
+                    </span>
+                </div>
+
+                <group>
+                    <field name="settlement_date"/>
+                </group>
+
+                <p class="text-muted">
+                    Al marcarlas, pasan a <b>Liquidada</b> y dejan de entrar en los
+                    cálculos de nómina siguientes. Si el lote de nómina en el que
+                    están ya se cerró, quedan como <b>Cerrada</b>.
+                </p>
+
+                <footer>
+                    <button name="action_settle" type="object"
+                            string="Marcar como liquidada"
+                            class="btn-primary" data-hotkey="q"/>
+                    <button string="Cancelar" class="btn-secondary"
+                            special="cancel" data-hotkey="x"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- La acción sale en el menú Acciones del Reporte de Comisiones, que es
+         donde Recursos Humanos revisa lo que ya se pagó. -->
+    <record id="action_commission_settlement_wizard" model="ir.actions.act_window">
+        <field name="name">Marcar como liquidada</field>
+        <field name="res_model">commission.settlement.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_commission_settlement_wizard_form"/>
+        <field name="target">new</field>
+        <field name="groups_id" eval="[(4, ref('om_hr_payroll.group_hr_payroll_user'))]"/>
+        <field name="binding_model_id" ref="intelli_commision.model_invoice_commission_line"/>
+        <field name="binding_view_types">list</field>
+    </record>
+
+</odoo>

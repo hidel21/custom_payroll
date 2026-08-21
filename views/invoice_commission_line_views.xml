@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- La fecha de liquidación va justo entre la fecha de pago del cliente y
+         la moneda, que es donde se lee la una al lado de la otra: primero
+         cuándo pagó el cliente, después cuándo se le pagó al comercial.
+
+         Odoo no puede mostrar u ocultar una columna según los datos que haya,
+         así que la columna está siempre y queda vacía mientras no se liquide.
+         Para ver solo lo liquidado está el filtro «Ya liquidadas». -->
+    <record id="view_invoice_commission_line_list_settlement" model="ir.ui.view">
+        <field name="name">invoice.commission.line.list.liquidacion</field>
+        <field name="model">invoice.commission.line</field>
+        <field name="inherit_id"
+            ref="intelli_commision.view_invoice_commission_line_list_report" />
+        <field name="arch" type="xml">
+            <field name="payment_date_invoice" position="after">
+                <field name="settlement_date" optional="show" />
+            </field>
+        </field>
+    </record>
+
+    <record id="view_invoice_commission_line_form_settlement" model="ir.ui.view">
+        <field name="name">invoice.commission.line.form.liquidacion</field>
+        <field name="model">invoice.commission.line</field>
+        <field name="inherit_id"
+            ref="account_custom.view_invoice_commission_line_form" />
+        <field name="arch" type="xml">
+            <field name="payment_date_invoice" position="after">
+                <field name="settlement_date" readonly="1" />
+            </field>
+        </field>
+    </record>
+
+    <!-- Los filtros que necesita quien liquida: qué falta por pagar, qué ya se
+         pagó, y qué se calculó en cero y no debería haberse quedado así. -->
+    <record id="view_invoice_commission_line_search_settlement" model="ir.ui.view">
+        <field name="name">invoice.commission.line.search.liquidacion</field>
+        <field name="model">invoice.commission.line</field>
+        <field name="inherit_id"
+            ref="intelli_commision.view_invoice_commission_line_search_report" />
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='filter_payment_date']" position="before">
+                <filter name="filter_por_liquidar" string="Pendientes de liquidar"
+                    domain="[('payment_date_invoice', '!=', False),
+                                 ('settlement_date', '=', False)]" />
+                <filter name="filter_liquidadas" string="Ya liquidadas"
+                    domain="[('settlement_date', '!=', False)]" />
+                <filter name="filter_sin_importe" string="Calculadas en cero"
+                    domain="[('state', '!=', 'draft'),
+                                 ('commission_amount', '=', 0)]" />
+                <separator />
+            </xpath>
+            <xpath expr="//group" position="inside">
+                <filter name="group_settlement" string="Fecha de Liquidación"
+                    context="{'group_by': 'settlement_date'}" />
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
