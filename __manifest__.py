@@ -33,11 +33,16 @@ distintas, y mezclarlos obligaba a tocar contabilidad para arreglar nómina.
     'author': "Hidelberg Martinez",
     'website': "https://intelli-next.com",
     'category': 'Human Resources/Payroll',
-    'version': '18.0.1.2.0',
+    'version': '18.0.1.2.1',
     'license': 'LGPL-3',
     'depends': [
         'account_custom',
         'om_hr_payroll',
+        # El reporte en Excel se declara con report_type='xlsx', y ese valor lo
+        # añade report_xlsx (OCA). Sin declararlo, en una base donde ese módulo
+        # no esté instalado la carga del reporte falla y con ella la
+        # instalación entera.
+        'report_xlsx',
     ],
     'data': [
         'security/ir.model.access.csv',
