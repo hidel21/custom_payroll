@@ -83,7 +83,7 @@
          donde se revisa lo que ya se pagó. Se añade el grupo de corrección para
          que la vea también quien tenga ese permiso sin ser de nómina. -->
     <record id="action_commission_settlement_wizard" model="ir.actions.act_window">
-        <field name="name">Cambiar de estado</field>
+        <field name="name">⇄ Cambiar de estado</field>
         <field name="res_model">commission.settlement.wizard</field>
         <field name="view_mode">form</field>
         <field name="view_id" ref="view_commission_settlement_wizard_form"/>
