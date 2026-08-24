@@ -4,6 +4,9 @@ from odoo import api, fields, models
 
 _logger = logging.getLogger(__name__)
 
+# Estados de lote de nómina que significan «esto ya se pagó y no se toca».
+LOTES_CERRADOS = ("close", "paid", "done")
+
 
 class InvoiceCommissionLine(models.Model):
     """La cara de nómina de una comisión: cuándo y cómo se le paga al comercial.
@@ -28,6 +31,43 @@ class InvoiceCommissionLine(models.Model):
         "nómina al generar los comprobantes del lote. No confundir con la "
         "Fecha de Pago, que es cuando pagó el cliente.",
     )
+
+    # ------------------------------------------------------------------
+    # Quién corrigió el estado a mano
+    # ------------------------------------------------------------------
+    # El estado se deduce de las fechas, así que tocarlo a mano es siempre una
+    # excepción: alguien marcó como liquidado lo que no lo estaba. Estos tres
+    # campos no intervienen en ningún cálculo; existen para poder responder
+    # meses después a «¿quién deshizo esto y por qué?».
+
+    state_change_uid = fields.Many2one(
+        comodel_name="res.users",
+        string="Cambio manual por",
+        readonly=True,
+        copy=False,
+        help="Quién cambió a mano el estado de liquidación por última vez.",
+    )
+
+    state_change_date = fields.Datetime(
+        string="Fecha del cambio manual",
+        readonly=True,
+        copy=False,
+    )
+
+    state_change_reason = fields.Char(
+        string="Motivo del cambio",
+        readonly=True,
+        copy=False,
+        help="Lo que escribió quien lo cambió, en el momento de hacerlo.",
+    )
+
+    def _firmar_cambio(self, motivo=None):
+        """Valores con los que se firma un cambio de estado hecho a mano."""
+        return {
+            "state_change_uid": self.env.uid,
+            "state_change_date": fields.Datetime.now(),
+            "state_change_reason": motivo or False,
+        }
 
     # ------------------------------------------------------------------
     # El estado sigue a las fechas
@@ -59,7 +99,6 @@ class InvoiceCommissionLine(models.Model):
         Mora— no se tocan: el primero es anterior al cálculo y los otros dos se
         marcan a mano.
         """
-        LOTES_CERRADOS = ("close", "paid", "done")
         contexto = {"sin_sincronizar_estado": True}
         destino = {}
 

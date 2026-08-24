@@ -16,6 +16,11 @@
         <field name="arch" type="xml">
             <field name="payment_date_invoice" position="after">
                 <field name="settlement_date" optional="show" />
+                <!-- Ocultas por defecto: solo interesan cuando hay que auditar
+                     una corrección, y la lista ya va sobrada de columnas. -->
+                <field name="state_change_uid" optional="hide" />
+                <field name="state_change_date" optional="hide" />
+                <field name="state_change_reason" optional="hide" />
             </field>
         </field>
     </record>
@@ -28,6 +33,12 @@
         <field name="arch" type="xml">
             <field name="payment_date_invoice" position="after">
                 <field name="settlement_date" readonly="1" />
+                <field name="state_change_uid" readonly="1"
+                    invisible="not state_change_uid" />
+                <field name="state_change_date" readonly="1"
+                    invisible="not state_change_uid" />
+                <field name="state_change_reason" readonly="1"
+                    invisible="not state_change_uid" />
             </field>
         </field>
     </record>

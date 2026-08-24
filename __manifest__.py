@@ -33,7 +33,7 @@ distintas, y mezclarlos obligaba a tocar contabilidad para arreglar nómina.
     'author': "Hidelberg Martinez",
     'website': "https://intelli-next.com",
     'category': 'Human Resources/Payroll',
-    'version': '18.0.1.2.1',
+    'version': '18.0.1.3.0',
     'license': 'LGPL-3',
     'depends': [
         'account_custom',
@@ -45,6 +45,7 @@ distintas, y mezclarlos obligaba a tocar contabilidad para arreglar nómina.
         'report_xlsx',
     ],
     'data': [
+        'security/commission_security.xml',
         'security/ir.model.access.csv',
         'data/ir_cron.xml',
         'report/report_actions.xml',

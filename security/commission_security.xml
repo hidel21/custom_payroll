@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Un permiso suelto, deliberadamente sin categoría de aplicación.
+
+         Odoo decide en res_users.py:1855-1858 cómo pintar los grupos de cada
+         categoría: si el orden de implicación es total sale un desplegable, y
+         si no, casillas. Meter este grupo en la categoría de Nómina rompería
+         su desplegable Oficial/Responsable y lo convertiría en casillas. Sin
+         categoría, aparece como una casilla independiente en la pestaña de
+         permisos del usuario, que es justo lo que se quiere: un permiso que se
+         da a una persona concreta sin cambiarle su rol. -->
+    <record id="group_commission_state_manager" model="res.groups">
+        <field name="name">Comisiones: corregir estado</field>
+        <field name="comment">Permite devolver una comisión ya liquidada al
+            estado anterior desde el Reporte de Comisiones, para corregir
+            liquidaciones marcadas por error. Cada corrección queda firmada con
+            el usuario, la fecha y el motivo, así que este permiso se da a la
+            persona que responde por esas correcciones, no a un rol entero.
+        </field>
+    </record>
+
+</odoo>

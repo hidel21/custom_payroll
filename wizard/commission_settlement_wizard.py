@@ -1,25 +1,37 @@
 import logging
 
 from odoo import Command, api, fields, models
-from odoo.exceptions import UserError
+from odoo.exceptions import AccessError, UserError
+
+from ..models.invoice_commission_line import LOTES_CERRADOS
 
 _logger = logging.getLogger(__name__)
 
+GRUPO_CORRECCION = 'custom_payroll.group_commission_state_manager'
+
 
 class CommissionSettlementWizard(models.TransientModel):
-    """Marca varias comisiones como liquidadas de una vez.
+    """Mueve varias comisiones entre liquidada y sin liquidar, en los dos sentidos.
 
-    Es lo que pedía Recursos Humanos en la reunión: seleccionar las comisiones
-    que ya se pagaron, marcarlas, y que dejen de aparecer como pendientes en los
-    cálculos de nómina siguientes. Sin esto había que entrar una por una, y las
-    ya pagadas volvían a colarse en el cálculo del mes siguiente.
+    Nació para lo primero que pidió Recursos Humanos: marcar de una vez las
+    comisiones ya pagadas para que dejaran de colarse en el cálculo del mes
+    siguiente. En la reunión del 21 de agosto apareció la otra mitad del
+    problema, en palabras de Contabilidad: alguien marca por error una tanda y
+    no hay forma de deshacerlo.
 
-    La fecha es editable a propósito: al ponerse al día hay que registrar
-    comisiones pagadas en julio, no la fecha de hoy.
+    Así que el mismo asistente hace las dos cosas, pero no para todo el mundo.
+    Marcar como liquidada es trabajo corriente de nómina. **Deshacerlo es una
+    corrección**, y esa se reserva a quien tenga el permiso «Comisiones:
+    corregir estado»: solo esa persona ve el botón, y su nombre queda escrito en
+    cada comisión que devuelve.
+
+    Ni un caso ni el otro escriben el estado directamente. Se escriben las
+    fechas, y el estado las sigue —igual que hace el resto del módulo—, de modo
+    que no puede quedar una comisión en Liquidada sin fecha de liquidación.
     """
 
     _name = 'commission.settlement.wizard'
-    _description = 'Marcar Comisiones como Liquidadas'
+    _description = 'Estado de Liquidación de Comisiones'
 
     line_ids = fields.Many2many(
         comodel_name='invoice.commission.line',
@@ -34,6 +46,12 @@ class CommissionSettlementWizard(models.TransientModel):
              "una fecha pasada para registrar liquidaciones de meses "
              "anteriores.")
 
+    reason = fields.Char(
+        string='Motivo',
+        help="Queda escrito en cada comisión junto a su nombre y la fecha. "
+             "Obligatorio al devolver una comisión al estado anterior: es lo "
+             "que permite entender la corrección meses después.")
+
     pending_count = fields.Integer(
         string='Se van a marcar',
         compute='_compute_resumen')
@@ -42,8 +60,17 @@ class CommissionSettlementWizard(models.TransientModel):
         string='Ya estaban liquidadas',
         compute='_compute_resumen')
 
+    closed_count = fields.Integer(
+        string='En lotes ya cerrados',
+        compute='_compute_resumen')
+
     total_amount = fields.Monetary(
         string='Importe que se liquida',
+        currency_field='currency_id',
+        compute='_compute_resumen')
+
+    revert_amount = fields.Monetary(
+        string='Importe que se devuelve',
         currency_field='currency_id',
         compute='_compute_resumen')
 
@@ -61,12 +88,12 @@ class CommissionSettlementWizard(models.TransientModel):
         if self.env.context.get('active_model') != 'invoice.commission.line':
             raise UserError(
                 "Este asistente se lanza desde el Reporte de Comisiones, "
-                "seleccionando las comisiones que ya se pagaron.")
+                "seleccionando las comisiones que se quieren marcar o corregir.")
 
         lines = self.env['invoice.commission.line'].browse(
             self.env.context.get('active_ids', []))
-        # Una comisión en borrador no se ha calculado todavía: liquidarla no
-        # significaría nada, así que se descarta con un aviso claro.
+        # Una comisión en borrador no se ha calculado todavía: ni liquidarla ni
+        # devolverla significarían nada, así que se descarta con un aviso claro.
         lines = lines.filtered(lambda l: l.state != 'draft')
         if not lines:
             raise UserError(
@@ -80,25 +107,90 @@ class CommissionSettlementWizard(models.TransientModel):
     def _compute_resumen(self):
         for wizard in self:
             pendientes = wizard.line_ids.filtered(lambda l: not l.settlement_date)
+            liquidadas = wizard.line_ids - pendientes
             wizard.pending_count = len(pendientes)
-            wizard.already_count = len(wizard.line_ids) - len(pendientes)
+            wizard.already_count = len(liquidadas)
+            # Las que están en un lote ya cerrado son las delicadas: ese dinero
+            # ya salió hacia el comercial.
+            wizard.closed_count = len(liquidadas.filtered(
+                lambda l: l.payslip_id.payslip_run_id.state in LOTES_CERRADOS))
             wizard.currency_id = (
                 wizard.line_ids[:1].currency_id or self.env.company.currency_id)
             wizard.total_amount = sum(pendientes.mapped('commission_amount'))
+            wizard.revert_amount = sum(liquidadas.mapped('commission_amount'))
+
+    # ------------------------------------------------------------------
+    # Marcar como liquidada
+    # ------------------------------------------------------------------
 
     def action_settle(self):
         self.ensure_one()
         pendientes = self.line_ids.filtered(lambda l: not l.settlement_date)
         if not pendientes:
             raise UserError(
-                "Todas las comisiones seleccionadas están ya liquidadas.")
+                "Todas las comisiones seleccionadas están ya liquidadas. "
+                "Para deshacerlo está el botón «Devolver al estado anterior».")
 
         # Escribir la fecha es lo único que hace falta: el estado la sigue solo.
-        pendientes.write({'settlement_date': self.settlement_date})
+        valores = {'settlement_date': self.settlement_date}
+        valores.update(pendientes._firmar_cambio(self.reason))
+        pendientes.write(valores)
 
         _logger.info(
             "custom_payroll: %s comisiones marcadas como liquidadas con fecha "
             "%s por %s (importe %s).",
             len(pendientes), self.settlement_date, self.env.user.login,
             sum(pendientes.mapped('commission_amount')))
+        return {'type': 'ir.actions.act_window_close'}
+
+    # ------------------------------------------------------------------
+    # Devolver al estado anterior
+    # ------------------------------------------------------------------
+
+    def action_revert(self):
+        """Deshace la liquidación: quita la fecha y suelta el recibo de nómina.
+
+        No hay que decidir a qué estado vuelve. Al quedarse sin fecha de
+        liquidación, la comisión vuelve sola a **Pagada** si el cliente ya había
+        pagado la factura, o a **Por Liquidar** si todavía no. Ese es el estado
+        que le corresponde por los hechos, que es más fiable que recordar en
+        cuál estaba antes.
+
+        Soltar el recibo (``payslip_id``) no es un extra: sin eso la comisión
+        queda enganchada a un recibo viejo y ``_get_employee_commision`` no la
+        volvería a recoger nunca, con lo que la corrección la dejaría en un
+        limbo del que solo se sale a mano.
+        """
+        self.ensure_one()
+        if not self.env.user.has_group(GRUPO_CORRECCION):
+            raise AccessError(
+                "Devolver una comisión al estado anterior está reservado a "
+                "quien tenga el permiso «Comisiones: corregir estado». "
+                "Pídaselo a un administrador si le corresponde.")
+
+        liquidadas = self.line_ids.filtered(lambda l: l.settlement_date)
+        if not liquidadas:
+            raise UserError(
+                "Ninguna de las comisiones seleccionadas está liquidada, así "
+                "que no hay nada que devolver.")
+
+        motivo = (self.reason or '').strip()
+        if not motivo:
+            raise UserError(
+                "Escriba el motivo de la corrección. Queda firmado con su "
+                "nombre en cada comisión, y es lo que permitirá entender "
+                "dentro de unos meses por qué se deshizo esta liquidación.")
+
+        valores = {'settlement_date': False, 'payslip_id': False}
+        valores.update(liquidadas._firmar_cambio(motivo))
+        liquidadas.write(valores)
+
+        # A propósito en warning y no en info: una liquidación deshecha es un
+        # hecho excepcional que interesa encontrar rápido en el log.
+        _logger.warning(
+            "custom_payroll: %s comisiones devueltas al estado anterior por %s "
+            "(importe %s, %s en lotes ya cerrados). Motivo: %s",
+            len(liquidadas), self.env.user.login,
+            sum(liquidadas.mapped('commission_amount')), self.closed_count,
+            motivo)
         return {'type': 'ir.actions.act_window_close'}
