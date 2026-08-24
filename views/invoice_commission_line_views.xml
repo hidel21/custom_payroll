@@ -51,7 +51,15 @@
         <field name="inherit_id"
             ref="intelli_commision.view_invoice_commission_line_search_report" />
         <field name="arch" type="xml">
+            <!-- El «Pendientes» del módulo base filtraba por ready_to_pay, que
+                 es un campo almacenado y se queda desfasado en cuanto cambia la
+                 fórmula. Aquí abajo está el mismo filtro hecho con las dos
+                 fechas, que son hechos, así que el del base se retira para no
+                 tener dos filtros que dicen lo mismo. -->
+            <xpath expr="//filter[@name='filter_ready']" position="replace" />
+
             <xpath expr="//filter[@name='filter_payment_date']" position="before">
+                <separator />
                 <filter name="filter_por_liquidar" string="Pendientes de liquidar"
                     domain="[('payment_date_invoice', '!=', False),
                                  ('settlement_date', '=', False)]" />
