@@ -21,7 +21,7 @@ class CommissionMaintenanceWizard(models.TransientModel):
                 "name": "Poner al día los estados de liquidación",
                 "help": "Repasa todas las comisiones y pone su estado de "
                 "acuerdo con las fechas: si el cliente ya pagó queda en "
-                "Pagada, si se le pagó al comercial en Liquidada, y si el lote "
+                "Por Liquidar, si se le pagó al comercial en Liquidada, y si el lote "
                 "de nómina se cerró en Cerrada.\n\nHace falta después de "
                 "instalar o de corregir fechas a mano, porque el estado de las "
                 "comisiones que ya existían no se recalcula solo. No toca las "

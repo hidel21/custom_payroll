@@ -151,8 +151,8 @@ class CommissionSettlementWizard(models.TransientModel):
         """Deshace la liquidación: quita la fecha y suelta el recibo de nómina.
 
         No hay que decidir a qué estado vuelve. Al quedarse sin fecha de
-        liquidación, la comisión vuelve sola a **Pagada** si el cliente ya había
-        pagado la factura, o a **Por Liquidar** si todavía no. Ese es el estado
+        liquidación, la comisión vuelve sola a **Por Liquidar** si el cliente ya
+        había pagado la factura, o a **Por Cobrar** si todavía no. Ese es el estado
         que le corresponde por los hechos, que es más fiable que recordar en
         cuál estaba antes.
 
