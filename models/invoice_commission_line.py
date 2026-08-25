@@ -153,6 +153,10 @@ class InvoiceCommissionLine(models.Model):
         lines = self.sudo().search(
             [
                 ("employee_id", "=", employee.id),
+                # Una comisión en Borrador es una que todavía no está bien
+                # calculada —le falta la cuenta analítica del proyecto, o nadie
+                # ha pulsado Compute—. Pagarla sería pagar un número provisional.
+                ("state", "!=", "draft"),
                 ("settlement_date", "=", False),
                 ("payment_date_invoice", "!=", False),
                 ("payment_date_invoice", "<=", payslip.date_to),
