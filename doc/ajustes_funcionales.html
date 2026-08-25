@@ -176,14 +176,14 @@ julio que Recursos Humanos señaló en la reunión.</p>
 <p>El estado de una comisión ya no se teclea: se deduce. Eso evita que dos
 personas lo interpreten de forma distinta.</p>
 
-<div class="flujo"><b>Borrador</b> → <b>Por Liquidar</b> → <b>Pagada</b> → <b>Liquidada</b> → <b>Cerrada</b>
+<div class="flujo"><b>Borrador</b> → <b>Por Cobrar</b> → <b>Por Liquidar</b> → <b>Liquidada</b> → <b>Cerrada</b>
                                     <i>y aparte:</i> Fuera de Corte · En Mora</div>
 
 <table class="datos">
   <tr><th style="width:26%">Estado</th><th>Cuándo lo toma</th></tr>
   <tr><td><b>Borrador</b></td><td>Se añadió el empleado, pero aún no se ha calculado</td></tr>
-  <tr><td><b>Por Liquidar</b></td><td>Está calculada y el cliente todavía no ha pagado</td></tr>
-  <tr><td><b>Pagada</b></td><td>El cliente pagó la factura. Ya se puede llevar a nómina</td></tr>
+  <tr><td><b>Por Cobrar</b></td><td>Está calculada y el cliente todavía no ha pagado</td></tr>
+  <tr><td><b>Por Liquidar</b></td><td>El cliente pagó la factura. Ya se puede llevar a nómina</td></tr>
   <tr><td><b>Liquidada</b></td><td>Tiene fecha de liquidación: se le pagó al comercial</td></tr>
   <tr><td><b>Cerrada</b></td><td>Además, el lote de nómina en el que se pagó está cerrado</td></tr>
   <tr><td><b>Fuera de Corte</b></td><td>El cliente pagó después del cierre; se liquida en la siguiente</td></tr>
@@ -191,8 +191,14 @@ personas lo interpreten de forma distinta.</p>
 </table>
 
 <p>En el entorno de pruebas, de las 534 comisiones existentes: <b>250 están Por
-Liquidar</b> (el cliente aún no ha pagado) y <b>282 están Pagadas</b>, es decir
+Cobrar</b> (el cliente aún no ha pagado) y <b>282 están Por Liquidar</b>, es decir
 listas para llevar a nómina.</p>
+
+<p class="nota"><b>Sobre los nombres.</b> En la reunión estos dos estados se
+llamaban «Por Liquidar» y «Pagada», y quedaban al revés de lo que significan:
+lo que se llamaba <i>Por Liquidar</i> era justo lo que no se podía liquidar,
+porque el cliente no había pagado. Se renombraron después para que cada uno
+diga lo que es. Los datos no cambiaron: solo las etiquetas.</p>
 
 <h2><span class="n">Función nueva</span>Marcar comisiones como liquidadas</h2>
 
@@ -269,14 +275,14 @@ entorno de pruebas:</p>
 
 <table class="datos">
   <tr><th>Factura</th><th>Fecha de pago del cliente</th><th>Estado</th><th>Fecha de liquidación</th></tr>
-  <tr><td>FV2726</td><td>21-07-2026</td><td>Pagada</td><td>pendiente</td></tr>
-  <tr><td>FV2718</td><td>10-07-2026</td><td>Pagada</td><td>pendiente</td></tr>
-  <tr><td>FV2503</td><td>02-07-2026</td><td>Pagada</td><td>pendiente</td></tr>
-  <tr><td>FV2581</td><td>26-06-2026</td><td>Pagada</td><td>pendiente</td></tr>
-  <tr><td>FV2467</td><td>25-06-2026</td><td>Pagada</td><td>pendiente</td></tr>
+  <tr><td>FV2726</td><td>21-07-2026</td><td>Por Liquidar</td><td>pendiente</td></tr>
+  <tr><td>FV2718</td><td>10-07-2026</td><td>Por Liquidar</td><td>pendiente</td></tr>
+  <tr><td>FV2503</td><td>02-07-2026</td><td>Por Liquidar</td><td>pendiente</td></tr>
+  <tr><td>FV2581</td><td>26-06-2026</td><td>Por Liquidar</td><td>pendiente</td></tr>
+  <tr><td>FV2467</td><td>25-06-2026</td><td>Por Liquidar</td><td>pendiente</td></tr>
 </table>
 
-<p>Las cinco aparecen ahora como <b>Pagadas</b>, que es lo correcto: el cliente
+<p>Las cinco aparecen ahora como <b>Por Liquidar</b>, que es lo correcto: el cliente
 pagó pero al comercial todavía no se le ha liquidado. Seleccionándolas y usando
 el botón nuevo con fecha de julio, pasan a <b>Liquidadas</b> y salen de los
 cálculos. Probado sobre estas mismas cinco.</p>
