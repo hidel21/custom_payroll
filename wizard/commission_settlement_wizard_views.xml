@@ -29,9 +29,9 @@
                     </span>
                     <span groups="custom_payroll.group_commission_state_manager">
                         Con <b>Devolver al estado anterior</b> vuelven a
-                        <b>Pagada</b> o <b>Por Liquidar</b>, según haya pagado ya
-                        el cliente, y entran otra vez en el siguiente cálculo de
-                        nómina.
+                        <b>Por Liquidar</b> o <b>Por Cobrar</b>, según haya pagado
+                        ya el cliente, y entran otra vez en el siguiente cálculo
+                        de nómina.
                     </span>
                 </div>
 

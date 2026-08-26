@@ -14,8 +14,8 @@ Qué contiene
 
 * ``settlement_date`` — la fecha en que la comisión se le pagó al comercial. Es
   un hecho registrado, no un estado que dependa de que alguien pulse un botón.
-* Las transiciones de estado que dependen de la nómina: **Pagada** cuando el
-  cliente paga la factura, **Liquidada** cuando se le paga al comercial y
+* Las transiciones de estado que dependen de la nómina: **Por Liquidar** cuando
+  el cliente paga la factura, **Liquidada** cuando se le paga al comercial y
   **Cerrada** cuando el lote de nómina queda cerrado.
 * La recogida de comisiones para el recibo, que sustituye a la del módulo
   original: descarta lo ya liquidado, admite recalcular el mismo recibo sin
@@ -33,7 +33,7 @@ distintas, y mezclarlos obligaba a tocar contabilidad para arreglar nómina.
     'author': "Hidelberg Martinez",
     'website': "https://intelli-next.com",
     'category': 'Human Resources/Payroll',
-    'version': '18.0.1.3.3',
+    'version': '18.0.1.6.0',
     'license': 'LGPL-3',
     'depends': [
         'account_custom',

@@ -10,8 +10,8 @@
         <field name="interval_type">days</field>
         <!-- Desactivada: es una operación de mantenimiento, no una tarea
              periódica. Se lanza a mano cuando algo quedó descuadrado, por
-             ejemplo comisiones dentro de un lote ya pagado que se quedaron en
-             Por Liquidar porque nadie pulsó el botón de comprobantes. -->
+             ejemplo comisiones dentro de un lote ya pagado que se quedaron sin
+             liquidar porque nadie pulsó el botón de comprobantes. -->
         <field name="active" eval="False" />
     </record>
 

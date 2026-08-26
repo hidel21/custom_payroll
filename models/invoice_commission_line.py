@@ -92,8 +92,8 @@ class InvoiceCommissionLine(models.Model):
 
         * hay fecha de liquidación y el lote está cerrado → **Cerrada**
         * hay fecha de liquidación → **Liquidada**
-        * hay fecha de pago del cliente → **Pagada**
-        * no hay ninguna de las dos → **Por Liquidar**
+        * hay fecha de pago del cliente → **Por Liquidar**
+        * no hay ninguna de las dos → **Por Cobrar**
 
         Los estados que no dependen de fechas —Borrador, Fuera de Corte y En
         Mora— no se tocan: el primero es anterior al cálculo y los otros dos se
@@ -153,6 +153,10 @@ class InvoiceCommissionLine(models.Model):
         lines = self.sudo().search(
             [
                 ("employee_id", "=", employee.id),
+                # Una comisión en Borrador es una que todavía no está bien
+                # calculada —le falta la cuenta analítica del proyecto, o nadie
+                # ha pulsado Compute—. Pagarla sería pagar un número provisional.
+                ("state", "!=", "draft"),
                 ("settlement_date", "=", False),
                 ("payment_date_invoice", "!=", False),
                 ("payment_date_invoice", "<=", payslip.date_to),
@@ -189,7 +193,7 @@ class InvoiceCommissionLine(models.Model):
         """Pone al día estados y la marca de lista para pagar.
 
         Hace falta cuando algo quedó descuadrado: comisiones dentro de una
-        nómina ya pagada que se quedaron en Por Liquidar porque nadie pulsó el
+        nómina ya pagada que se quedaron sin liquidar porque nadie pulsó el
         botón de generar comprobantes, o cambios de fórmula que Odoo no
         recalcula por sí solo en campos almacenados.
         """

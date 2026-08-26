@@ -28,15 +28,15 @@ liquidado.
 ## Los estados siguen a los hechos
 
 ```
-Borrador → Por Liquidar → Pagada → Liquidada → Cerrada
+Borrador → Por Cobrar → Por Liquidar → Liquidada → Cerrada
                      y aparte: Fuera de Corte · En Mora
 ```
 
 | Estado | Lo que lo provoca |
 |---|---|
 | `draft` **Borrador** | Se añadió el empleado, aún sin calcular |
-| `calculated` **Por Liquidar** | Calculada, el cliente todavía no ha pagado |
-| `client_paid` **Pagada** | Hay fecha de pago: pagó el cliente |
+| `calculated` **Por Cobrar** | Calculada, el cliente todavía no ha pagado |
+| `client_paid` **Por Liquidar** | Hay fecha de pago: pagó el cliente, falta pagarle al comercial |
 | `paid` **Liquidada** | Hay fecha de liquidación: se le pagó al comercial |
 | `closed` **Cerrada** | Además, el lote de nómina está cerrado |
 | `out_of_cycle` **Fuera de Corte** | Cobró tras el cierre; se liquida en la siguiente |
