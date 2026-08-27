@@ -64,6 +64,14 @@ class CommissionSettlementWizard(models.TransientModel):
         string='En lotes ya cerrados',
         compute='_compute_resumen')
 
+    postponable_count = fields.Integer(
+        string='Se pueden posponer',
+        compute='_compute_resumen')
+
+    postponed_count = fields.Integer(
+        string='Ya pospuestas',
+        compute='_compute_resumen')
+
     total_amount = fields.Monetary(
         string='Importe que se liquida',
         currency_field='currency_id',
@@ -118,6 +126,12 @@ class CommissionSettlementWizard(models.TransientModel):
                 wizard.line_ids[:1].currency_id or self.env.company.currency_id)
             wizard.total_amount = sum(pendientes.mapped('commission_amount'))
             wizard.revert_amount = sum(liquidadas.mapped('commission_amount'))
+            # Posponer solo tiene sentido en lo que aún no se ha liquidado y
+            # no está ya apartado ni sin calcular.
+            wizard.postponed_count = len(
+                wizard.line_ids.filtered(lambda l: l.state == 'out_of_cycle'))
+            wizard.postponable_count = len(pendientes.filtered(
+                lambda l: l.state not in ('draft', 'out_of_cycle')))
 
     # ------------------------------------------------------------------
     # Marcar como liquidada
@@ -141,6 +155,49 @@ class CommissionSettlementWizard(models.TransientModel):
             "%s por %s (importe %s).",
             len(pendientes), self.settlement_date, self.env.user.login,
             sum(pendientes.mapped('commission_amount')))
+        return {'type': 'ir.actions.act_window_close'}
+
+    # ------------------------------------------------------------------
+    # Posponer para más adelante
+    # ------------------------------------------------------------------
+
+    def action_postpone(self):
+        """Aparta la comisión de esta nómina sin darla por mala.
+
+        Recursos Humanos pidió poder decir «esta no la pago ahora». No es que
+        esté mal calculada —para eso está Borrador— ni que ya se haya pagado:
+        simplemente se deja para la siguiente. Por eso va a **Fuera de Corte**,
+        que es el estado que ya existía para exactamente esto y que hasta ahora
+        no se podía marcar desde ninguna pantalla.
+
+        Mientras esté ahí la nómina no la recoge, y la sincronización de estados
+        tampoco la toca: se queda quieta hasta que alguien la traiga de vuelta
+        con «Devolver al estado anterior».
+        """
+        self.ensure_one()
+        if not self.env.user.has_group(GRUPO_CORRECCION):
+            raise AccessError(
+                "Posponer una comisión está reservado a quien tenga el permiso "
+                "«Comisiones: corregir estado».")
+
+        candidatas = self.line_ids.filtered(
+            lambda l: not l.settlement_date
+            and l.state not in ('draft', 'out_of_cycle'))
+        if not candidatas:
+            raise UserError(
+                "No hay nada que posponer: las seleccionadas están ya "
+                "liquidadas, sin calcular o ya apartadas.")
+
+        motivo = (self.reason or '').strip()
+        valores = {'state': 'out_of_cycle'}
+        valores.update(candidatas._firmar_cambio(motivo))
+        candidatas.with_context(sin_sincronizar_estado=True).write(valores)
+
+        _logger.info(
+            "custom_payroll: %s comisiones pospuestas por %s (importe %s). "
+            "Motivo: %s",
+            len(candidatas), self.env.user.login,
+            sum(candidatas.mapped('commission_amount')), motivo or '—')
         return {'type': 'ir.actions.act_window_close'}
 
     # ------------------------------------------------------------------
@@ -168,11 +225,15 @@ class CommissionSettlementWizard(models.TransientModel):
                 "quien tenga el permiso «Comisiones: corregir estado». "
                 "Pídaselo a un administrador si le corresponde.")
 
+        # Devolver sirve para dos cosas: deshacer una liquidación y traer de
+        # vuelta lo que se apartó. Se resuelven juntas porque para quien lo usa
+        # es el mismo gesto: «esto no debería estar donde está».
+        pospuestas = self.line_ids.filtered(lambda l: l.state == 'out_of_cycle')
         liquidadas = self.line_ids.filtered(lambda l: l.settlement_date)
-        if not liquidadas:
+        if not liquidadas and not pospuestas:
             raise UserError(
-                "Ninguna de las comisiones seleccionadas está liquidada, así "
-                "que no hay nada que devolver.")
+                "Ninguna de las comisiones seleccionadas está liquidada ni "
+                "pospuesta, así que no hay nada que devolver.")
 
         motivo = (self.reason or '').strip()
         if not motivo:
@@ -181,16 +242,24 @@ class CommissionSettlementWizard(models.TransientModel):
                 "nombre en cada comisión, y es lo que permitirá entender "
                 "dentro de unos meses por qué se deshizo esta liquidación.")
 
-        valores = {'settlement_date': False, 'payslip_id': False}
-        valores.update(liquidadas._firmar_cambio(motivo))
-        liquidadas.write(valores)
+        firma = self.line_ids._firmar_cambio(motivo)
+
+        # Lo apartado vuelve a «calculada» y la sincronización lo lleva desde
+        # ahí a donde le toque según sus fechas.
+        solo_pospuestas = pospuestas - liquidadas
+        if solo_pospuestas:
+            solo_pospuestas.write(dict(firma, state='calculated'))
+
+        if liquidadas:
+            liquidadas.write(
+                dict(firma, settlement_date=False, payslip_id=False))
 
         # A propósito en warning y no en info: una liquidación deshecha es un
         # hecho excepcional que interesa encontrar rápido en el log.
         _logger.warning(
             "custom_payroll: %s comisiones devueltas al estado anterior por %s "
             "(importe %s, %s en lotes ya cerrados). Motivo: %s",
-            len(liquidadas), self.env.user.login,
-            sum(liquidadas.mapped('commission_amount')), self.closed_count,
-            motivo)
+            len(liquidadas) + len(solo_pospuestas), self.env.user.login,
+            sum((liquidadas | solo_pospuestas).mapped('commission_amount')),
+            self.closed_count, motivo)
         return {'type': 'ir.actions.act_window_close'}

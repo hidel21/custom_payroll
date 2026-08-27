@@ -153,10 +153,12 @@ class InvoiceCommissionLine(models.Model):
         lines = self.sudo().search(
             [
                 ("employee_id", "=", employee.id),
-                # Una comisión en Borrador es una que todavía no está bien
-                # calculada —le falta la cuenta analítica del proyecto, o nadie
-                # ha pulsado Compute—. Pagarla sería pagar un número provisional.
-                ("state", "!=", "draft"),
+                # Dos estados quedan fuera del recibo, por motivos distintos:
+                # Borrador es una comisión que todavía no está bien calculada
+                # —le falta la analítica, o nadie ha pulsado Compute—, y Fuera
+                # de Corte es una que sí está bien pero que Recursos Humanos ha
+                # decidido dejar para más adelante.
+                ("state", "not in", ("draft", "out_of_cycle")),
                 ("settlement_date", "=", False),
                 ("payment_date_invoice", "!=", False),
                 ("payment_date_invoice", "<=", payslip.date_to),
@@ -175,11 +177,17 @@ class InvoiceCommissionLine(models.Model):
         for line in lines:
             amount = line.commission_amount
             if line.currency_id and line.currency_id != company_currency:
+                # La tasa es la del día en que se emitió la factura, no la del
+                # día del cobro ni la de hoy: la comisión nace con la venta, y
+                # esa es la referencia que usa contabilidad. Cobrar tres meses
+                # más tarde no debe cambiar lo que se le paga al comercial.
                 amount = line.currency_id._convert(
                     amount,
                     company_currency,
                     payslip.company_id,
-                    line.payment_date_invoice,
+                    line.invoice_date
+                    or line.payment_date_invoice
+                    or fields.Date.context_today(line),
                 )
             total += amount
         return total
