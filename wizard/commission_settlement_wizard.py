@@ -64,10 +64,6 @@ class CommissionSettlementWizard(models.TransientModel):
         string='En lotes ya cerrados',
         compute='_compute_resumen')
 
-    postponable_count = fields.Integer(
-        string='Se pueden posponer',
-        compute='_compute_resumen')
-
     postponed_count = fields.Integer(
         string='Ya pospuestas',
         compute='_compute_resumen')
@@ -126,12 +122,11 @@ class CommissionSettlementWizard(models.TransientModel):
                 wizard.line_ids[:1].currency_id or self.env.company.currency_id)
             wizard.total_amount = sum(pendientes.mapped('commission_amount'))
             wizard.revert_amount = sum(liquidadas.mapped('commission_amount'))
-            # Posponer solo tiene sentido en lo que aún no se ha liquidado y
-            # no está ya apartado ni sin calcular.
+            # Se cuentan las apartadas para poder traerlas de vuelta: la
+            # función de posponer se retiró, pero puede quedar alguna marcada
+            # de antes y sin esto no habría forma de recuperarla.
             wizard.postponed_count = len(
                 wizard.line_ids.filtered(lambda l: l.state == 'out_of_cycle'))
-            wizard.postponable_count = len(pendientes.filtered(
-                lambda l: l.state not in ('draft', 'out_of_cycle')))
 
     # ------------------------------------------------------------------
     # Marcar como liquidada
@@ -155,49 +150,6 @@ class CommissionSettlementWizard(models.TransientModel):
             "%s por %s (importe %s).",
             len(pendientes), self.settlement_date, self.env.user.login,
             sum(pendientes.mapped('commission_amount')))
-        return {'type': 'ir.actions.act_window_close'}
-
-    # ------------------------------------------------------------------
-    # Posponer para más adelante
-    # ------------------------------------------------------------------
-
-    def action_postpone(self):
-        """Aparta la comisión de esta nómina sin darla por mala.
-
-        Recursos Humanos pidió poder decir «esta no la pago ahora». No es que
-        esté mal calculada —para eso está Borrador— ni que ya se haya pagado:
-        simplemente se deja para la siguiente. Por eso va a **Fuera de Corte**,
-        que es el estado que ya existía para exactamente esto y que hasta ahora
-        no se podía marcar desde ninguna pantalla.
-
-        Mientras esté ahí la nómina no la recoge, y la sincronización de estados
-        tampoco la toca: se queda quieta hasta que alguien la traiga de vuelta
-        con «Devolver al estado anterior».
-        """
-        self.ensure_one()
-        if not self.env.user.has_group(GRUPO_CORRECCION):
-            raise AccessError(
-                "Posponer una comisión está reservado a quien tenga el permiso "
-                "«Comisiones: corregir estado».")
-
-        candidatas = self.line_ids.filtered(
-            lambda l: not l.settlement_date
-            and l.state not in ('draft', 'out_of_cycle'))
-        if not candidatas:
-            raise UserError(
-                "No hay nada que posponer: las seleccionadas están ya "
-                "liquidadas, sin calcular o ya apartadas.")
-
-        motivo = (self.reason or '').strip()
-        valores = {'state': 'out_of_cycle'}
-        valores.update(candidatas._firmar_cambio(motivo))
-        candidatas.with_context(sin_sincronizar_estado=True).write(valores)
-
-        _logger.info(
-            "custom_payroll: %s comisiones pospuestas por %s (importe %s). "
-            "Motivo: %s",
-            len(candidatas), self.env.user.login,
-            sum(candidatas.mapped('commission_amount')), motivo or '—')
         return {'type': 'ir.actions.act_window_close'}
 
     # ------------------------------------------------------------------
