@@ -166,8 +166,30 @@ Monedas*, y hoy está así:
 | My Intelli SL. | EUR | `ecb` |
 | Intelli Next C.A | VEF | `ecb` |
 
-**El bolívar no lo cubre ninguno de los dos.** El BCE no publica VEF/VES, así
-que esa moneda necesita una fuente propia. Ver *Pendiente* más abajo.
+**El bolívar no lo cubre ninguno de los dos**, así que tiene proveedor propio:
+`bcv`, añadido por `account_custom` al mismo desplegable. Lee la tasa oficial
+del Banco Central de Venezuela desde `ve.dolarapi.com`, en JSON y sin clave. Se
+prefiere a leer la web del propio BCV porque esa sirve una cadena de
+certificados incompleta —habría que saltarse la verificación TLS— y publica la
+tasa dentro del HTML de la portada.
+
+Un cron diario lleva además esa tasa a **todas** las compañías, no solo a la
+venezolana: una venta facturada en Venezuela puede comisionar a alguien de
+Colombia, y sin tasa de VES en esa compañía la conversión no se hace.
+
+### El histórico
+
+Las comisiones se convierten con la tasa del día de su factura, así que sin
+serie histórica no se pueden valorar hacia atrás. La operación
+`_cron_cargar_historico` la trae de tres sitios, porque ninguno cubre todo:
+
+| Fuente | Qué aporta |
+|---|---|
+| Banco Central Europeo | Serie diaria desde 1999, 41 monedas. Dólar, euro y peso mexicano |
+| TRM del Banco de la República | Peso colombiano, vía datos abiertos |
+| `ve.dolarapi.com` | Tasa oficial del BCV desde enero de 2023 |
+
+Es repetible: lo ya guardado no se vuelve a escribir.
 
 ### Cuando la tasa no es de fiar
 
@@ -189,11 +211,20 @@ En el Reporte de Comisiones hay un filtro **Conversión a revisar** que las list
 importe original. Si el recibo se emite en una moneda distinta a la de pago del
 comercial, hace un último salto con la misma fecha de referencia.
 
-### Pendiente
+### El bolívar: VEF y VES
 
-Falta una fuente de tasas para el bolívar. Está pensado resolverlo añadiendo un
-proveedor `bcv` al desplegable de `currency_rate_live` —extendiendo su selección
-e implementando `_parse_bcv_data`—, de modo que se actualice con el mismo cron y
-la misma pantalla que las demás monedas, sin montar un cron paralelo. Queda por
-decidir la fuente concreta: la web del BCV tiene el certificado SSL incompleto y
-publica varias tasas.
+La compañía venezolana se creó con la moneda **VEF**, el bolívar antiguo, pero
+los importes que hay en la base ya son bolívares actuales: lo que estaba mal era
+la etiqueta.
+
+Cambiar `company.currency_id` no es el camino —Odoo lo prohíbe en cuanto hay
+apuntes contables, y con razón: cambiar de registro de moneda no reconvierte los
+importes, solo cambia con qué unidad se leen—. Lo que se hace es renombrar el
+registro que ya está en uso, conservando id, asientos e importes:
+
+```python
+env['res.company'].migrar_bolivar_a_ves()
+```
+
+No está en ningún menú a propósito: es una operación de una vez y con copia de
+seguridad delante. Se niega si hay asientos en las dos monedas.
