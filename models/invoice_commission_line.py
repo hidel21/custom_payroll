@@ -150,8 +150,21 @@ class InvoiceCommissionLine(models.Model):
         Convierte la moneda, que la regla salarial de la base no hacía: una
         comisión en dólares se sumaba como si fueran pesos.
         """
+        # Los conceptos trimestrales —instalación, implementación, soporte— solo
+        # se liquidan en enero, abril, julio y octubre. Fuera de esos meses no
+        # entran, aunque la factura ya esté cobrada y su trimestre cerrado: eso
+        # es lo que hace que una factura cobrada tarde espere al corte
+        # siguiente en lugar de colarse en la nómina del mes.
+        MESES_DE_CORTE = (1, 4, 7, 10)
+        es_mes_de_corte = payslip.date_to and payslip.date_to.month in MESES_DE_CORTE
+
+        dominio_periodicidad = [("payable_from", "<=", payslip.date_to)]
+        if not es_mes_de_corte:
+            dominio_periodicidad.append(("payment_frequency", "=", "monthly"))
+
         lines = self.sudo().search(
-            [
+            dominio_periodicidad
+            + [
                 ("employee_id", "=", employee.id),
                 # Dos estados quedan fuera del recibo, por motivos distintos:
                 # Borrador es una comisión que todavía no está bien calculada
