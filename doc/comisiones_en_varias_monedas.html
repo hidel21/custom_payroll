@@ -1,0 +1,297 @@
+<title>Comisiones en varias monedas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+  :root {
+    --ground:#F5F6F3; --surface:#FFFFFF; --surface-alt:#EDF0EC;
+    --ink:#16211F; --ink-soft:#5A6A66; --rule:#DCE2DC;
+    --accent:#14594E; --accent-soft:#E3EEE9; --wrong:#A2432B;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:#0F1513; --surface:#171F1C; --surface-alt:#1E2724;
+      --ink:#E7EDEA; --ink-soft:#9BABA6; --rule:#2B3733;
+      --accent:#63C4AC; --accent-soft:#16302A; --wrong:#E88F70;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:#0F1513; --surface:#171F1C; --surface-alt:#1E2724;
+    --ink:#E7EDEA; --ink-soft:#9BABA6; --rule:#2B3733;
+    --accent:#63C4AC; --accent-soft:#16302A; --wrong:#E88F70;
+  }
+
+  body {
+    background:var(--ground); color:var(--ink);
+    font-family:"Source Sans 3", ui-sans-serif, system-ui, sans-serif;
+    font-size:1.0625rem; line-height:1.65; -webkit-font-smoothing:antialiased;
+  }
+  .page {
+    max-width:56rem; margin-inline:auto;
+    padding:clamp(2rem,5vw,4rem) clamp(1.1rem,4vw,2.5rem) 5rem;
+    display:flex; flex-direction:column; gap:3rem;
+  }
+  h1,h2,h3 { font-family:"Zilla Slab",Georgia,serif; text-wrap:balance; line-height:1.15; margin:0; }
+  h1 { font-size:clamp(2rem,5vw,2.9rem); font-weight:700; letter-spacing:-.015em; }
+  h2 { font-size:clamp(1.3rem,3vw,1.65rem); font-weight:600; }
+  h3 { font-size:1.06rem; font-weight:600; }
+  p { margin:0; }
+
+  .eyebrow {
+    font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:.7rem;
+    font-weight:600; letter-spacing:.16em; text-transform:uppercase; color:var(--accent);
+  }
+  .lead { font-size:1.18rem; color:var(--ink-soft); max-width:38rem; }
+  header.masthead {
+    display:flex; flex-direction:column; gap:.9rem;
+    border-bottom:2px solid var(--ink); padding-bottom:1.8rem;
+  }
+  .meta {
+    font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:.78rem;
+    color:var(--ink-soft); display:flex; flex-wrap:wrap; gap:.35rem 1.4rem;
+  }
+  section { display:flex; flex-direction:column; gap:1.2rem; }
+  .section-head { display:flex; flex-direction:column; gap:.4rem; }
+  .prose { max-width:40rem; display:flex; flex-direction:column; gap:.9rem; }
+
+  .path {
+    font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:.85rem;
+    background:var(--accent-soft); color:var(--accent);
+    padding:.12em .45em; border-radius:2px;
+  }
+
+  figure {
+    margin:0; background:var(--surface); border:1px solid var(--rule);
+    border-radius:3px; padding:1.5rem 1.25rem 1.1rem;
+    display:flex; flex-direction:column; gap:.9rem;
+  }
+  figure svg { max-width:100%; height:auto; display:block; margin-inline:auto; }
+  figcaption { font-size:.92rem; color:var(--ink-soft); max-width:44rem; margin-inline:auto; text-align:center; }
+
+  .scroller { overflow-x:auto; border:1px solid var(--rule); border-radius:3px; background:var(--surface); }
+  table { border-collapse:collapse; width:100%; font-size:.94rem; }
+  th,td { padding:.62rem .95rem; text-align:left; border-bottom:1px solid var(--rule); vertical-align:top; }
+  thead th {
+    font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:.68rem;
+    letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft);
+    background:var(--surface-alt); white-space:nowrap;
+  }
+  tbody tr:last-child td { border-bottom:none; }
+  td.num, th.num {
+    text-align:right; font-family:"IBM Plex Mono",ui-monospace,monospace;
+    font-variant-numeric:tabular-nums; white-space:nowrap;
+  }
+  .mon { font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:.85em; color:var(--ink-soft); }
+
+  .callout {
+    border-left:3px solid var(--accent); background:var(--surface);
+    padding:1rem 1.2rem; display:flex; flex-direction:column; gap:.5rem; max-width:42rem;
+  }
+  .callout.warn { border-left-color:var(--wrong); }
+
+  ol.pasos { margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:1.1rem; }
+  ol.pasos > li { display:grid; grid-template-columns:2.4rem 1fr; gap:.25rem 1rem; align-items:baseline; }
+  .paso-n {
+    font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:.85rem; font-weight:600;
+    color:var(--accent); border-top:2px solid var(--accent); padding-top:.35rem;
+  }
+  ol.pasos h3, ol.pasos p { grid-column:2; }
+  ol.pasos p { color:var(--ink-soft); max-width:38rem; }
+
+  footer.closing {
+    border-top:1px solid var(--rule); padding-top:1.4rem;
+    font-size:.92rem; color:var(--ink-soft); max-width:40rem;
+  }
+  a { color:var(--accent); }
+  :focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+</style>
+
+<div class="page">
+
+  <header class="masthead">
+    <span class="eyebrow">Comisiones · Guía para las analistas</span>
+    <h1>Comisiones en varias monedas</h1>
+    <p class="lead">Cada comisión se calcula en la moneda de la venta y se paga en la del comercial. El sistema hace la conversión y avisa cuando no puede.</p>
+    <div class="meta">
+      <span>Recursos Humanos y Contabilidad</span>
+      <span>Empleados → Reportes → Reporte de Comisiones</span>
+    </div>
+  </header>
+
+  <section>
+    <div class="section-head">
+      <span class="eyebrow">El caso</span>
+      <h2>Se vende en un país y se cobra en otro</h2>
+    </div>
+    <div class="prose">
+      <p>Kerlyn está contratada por la compañía de Estados Unidos y cobra en dólares, pero factura en Venezuela y en Colombia. Andrés está en la compañía de Colombia, cobra en pesos, y factura en Venezuela.</p>
+      <p>La comisión nace en la moneda de la factura, que es la de la venta. Pero a la persona hay que pagarle en la suya. Antes eso se hacía a mano y a ojo; ahora lo hace el sistema, con la tasa del día que corresponde y dejando constancia de cuál usó.</p>
+    </div>
+
+    <figure>
+      <svg viewBox="0 0 720 210" role="img" aria-label="La comisión nace en la moneda de la factura, se convierte con la tasa del día de esa factura, y se paga en la moneda del comercial.">
+        <defs>
+          <marker id="fl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+          </marker>
+        </defs>
+
+        <rect x="14" y="70" width="180" height="64" rx="3" fill="none" stroke="currentColor" stroke-width="1.2"/>
+        <text x="104" y="95" font-size="12.5" text-anchor="middle" fill="currentColor">La factura</text>
+        <text x="104" y="114" font-size="12" text-anchor="middle" fill="currentColor" opacity="0.7">2.837,66 VES</text>
+
+        <line x1="194" y1="102" x2="266" y2="102" stroke="currentColor" stroke-width="1.2" marker-end="url(#fl)"/>
+        <text x="230" y="92" font-size="11" text-anchor="middle" fill="currentColor" opacity="0.75">comisión</text>
+
+        <rect x="274" y="60" width="172" height="84" rx="3" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.6"/>
+        <text x="360" y="88" font-size="12.5" text-anchor="middle" fill="var(--accent)" font-weight="600">Conversión</text>
+        <text x="360" y="107" font-size="11.5" text-anchor="middle" fill="var(--accent)">con la tasa del día</text>
+        <text x="360" y="124" font-size="11.5" text-anchor="middle" fill="var(--accent)">de la factura</text>
+
+        <line x1="446" y1="102" x2="518" y2="102" stroke="currentColor" stroke-width="1.2" marker-end="url(#fl)"/>
+
+        <rect x="526" y="70" width="180" height="64" rx="3" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
+        <text x="616" y="95" font-size="12.5" text-anchor="middle" fill="var(--accent)">Lo que se le paga</text>
+        <text x="616" y="114" font-size="12" text-anchor="middle" fill="var(--accent)">3,75 USD</text>
+
+        <text x="14" y="34" font-size="11" font-family="ui-monospace, monospace" fill="currentColor" opacity="0.6">MONEDA DE LA VENTA</text>
+        <text x="706" y="34" font-size="11" font-family="ui-monospace, monospace" fill="var(--accent)" text-anchor="end">MONEDA DEL COMERCIAL</text>
+        <text x="360" y="176" font-size="11" text-anchor="middle" fill="currentColor" opacity="0.6">la nómina cobra siempre la cifra de la derecha</text>
+      </svg>
+      <figcaption>La comisión de Kerlyn por una venta en Venezuela: nace en bolívares y se le paga en dólares.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <span class="eyebrow">En pantalla</span>
+      <h2>Las dos cifras, siempre juntas</h2>
+    </div>
+    <div class="prose">
+      <p>En el Reporte de Comisiones hay cuatro columnas nuevas. Se activan desde el selector de columnas, arriba a la derecha de la lista.</p>
+    </div>
+    <div class="scroller">
+      <table>
+        <thead>
+          <tr><th>Empleado</th><th class="num">Comisión</th><th>Moneda venta</th><th>Moneda pago</th><th class="num">A pagar</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Kerlyn</td><td class="num">1.437,15</td><td class="mon">COP</td><td class="mon">USD</td><td class="num">0,46</td></tr>
+          <tr><td>Kerlyn</td><td class="num">2.837,66</td><td class="mon">VES</td><td class="mon">USD</td><td class="num">3,75</td></tr>
+          <tr><td>Kerlyn</td><td class="num">110,76</td><td class="mon">USD</td><td class="mon">USD</td><td class="num">110,76</td></tr>
+          <tr><td>Andrés</td><td class="num">6.887,01</td><td class="mon">VES</td><td class="mon">COP</td><td class="num">29.225,11</td></tr>
+          <tr><td>Andrés</td><td class="num">1.559,28</td><td class="mon">COP</td><td class="mon">COP</td><td class="num">1.559,28</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="prose">
+      <p>Fíjese en la tercera y la quinta fila: cuando se vende y se cobra en la misma moneda, <strong>el importe no se toca</strong>. No hay conversión de ida y vuelta que introduzca céntimos de diferencia.</p>
+      <p>Hay además una agrupación nueva, <strong>Agrupar por → Moneda de pago</strong>, que responde de un vistazo a «cuánto hay que pagar en dólares y cuánto en pesos».</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <span class="eyebrow">Configuración</span>
+      <h2>Dos cosas que se ajustan</h2>
+    </div>
+    <div class="scroller">
+      <table>
+        <thead><tr><th style="width:30%">Qué</th><th style="width:32%">Dónde</th><th>Detalle</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>Moneda de pago de cada comercial</strong></td>
+            <td>Empleados → la ficha → pestaña Ajustes → Información de Comisiones</td>
+            <td>Se rellena sola con la moneda de su compañía. Se cambia a mano en quien cobre en otra, y una vez cambiada se respeta</td>
+          </tr>
+          <tr>
+            <td><strong>Con qué día se convierte</strong></td>
+            <td>Ajustes → Nómina → Comisiones</td>
+            <td>La fecha de la factura (lo habitual) o la del cobro. Al cambiarlo se recalculan todas las comisiones no liquidadas</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout">
+      <p><strong>Por qué la fecha de la factura y no la de hoy.</strong> La comisión nace con la venta. Si se usara la tasa del día en que se mira, el mismo trabajo valdría distinto cada mañana y nadie podría cuadrar una nómina con la del mes pasado.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <span class="eyebrow">Las tasas</span>
+      <h2>De dónde salen y cada cuánto se actualizan</h2>
+    </div>
+    <div class="scroller">
+      <table>
+        <thead><tr><th style="width:26%">Moneda</th><th style="width:36%">Fuente</th><th>Desde</th></tr></thead>
+        <tbody>
+          <tr><td>Dólar, euro, peso mexicano</td><td>Banco Central Europeo</td><td>Serie diaria desde 1999</td></tr>
+          <tr><td>Peso colombiano</td><td>TRM del Banco de la República</td><td>Datos abiertos del Estado</td></tr>
+          <tr><td>Bolívar</td><td>Tasa oficial del Banco Central de Venezuela</td><td>Enero de 2023</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="prose">
+      <p>Se actualizan solas todos los días. No hay que hacer nada, pero conviene saber que existen: si un día una conversión no cuadra, lo primero que hay que mirar es si llegó la tasa.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <span class="eyebrow">Cuando algo no cuadra</span>
+      <h2>El filtro «Conversión a revisar»</h2>
+    </div>
+    <div class="prose">
+      <p>El sistema marca las comisiones cuya conversión no es de fiar, y hay un filtro en el Reporte de Comisiones que las lista. Son dos casos:</p>
+    </div>
+    <div class="scroller">
+      <table>
+        <thead><tr><th style="width:42%">Lo que dice el aviso</th><th>Qué significa</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><em>«Sin conversión real: … han quedado con el mismo importe»</em></td>
+            <td>No había tasa para ese día, así que el importe pasó tal cual. Un bolívar no vale un dólar: <strong>no se paga hasta resolverlo</strong></td>
+          </tr>
+          <tr>
+            <td><em>«La tasa de … más cercana es del …, N días antes»</em></td>
+            <td>Se usó la tasa anterior más próxima, que es lo correcto, pero está lejos de la fecha. Conviene mirarlo si son muchos días</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout warn">
+      <p><strong>Esto existe por un motivo concreto.</strong> Cuando Odoo no encuentra una tasa no se queja: convierte uno a uno y devuelve el mismo número. Una comisión de 2.837 bolívares aparecería como 2.837 dólares, y es una cifra perfectamente creíble. El aviso es lo que distingue una conversión hecha de una que no se hizo.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <span class="eyebrow">La rutina</span>
+      <h2>Qué mirar antes de pagar</h2>
+    </div>
+    <ol class="pasos">
+      <li>
+        <span class="paso-n">01</span>
+        <h3>Filtrar «Conversión a revisar»</h3>
+        <p>Si sale vacío, todas las conversiones están hechas con una tasa real. Es la comprobación de diez segundos.</p>
+      </li>
+      <li>
+        <span class="paso-n">02</span>
+        <h3>Agrupar por moneda de pago</h3>
+        <p>Da el total a pagar en cada moneda, que es la cifra que se lleva a nómina.</p>
+      </li>
+      <li>
+        <span class="paso-n">03</span>
+        <h3>Comprobar quien haya entrado nuevo</h3>
+        <p>Un comercial recién dado de alta hereda la moneda de su compañía. Si cobra en otra, hay que ponérsela en su ficha antes de la primera nómina.</p>
+      </li>
+    </ol>
+  </section>
+
+  <footer class="closing">
+    <p>La nómina cobra siempre el importe ya convertido, nunca el original de la factura. Si un recibo no cuadra con lo que muestra el reporte, lo primero es mirar la columna <strong>Fecha de la tasa</strong> de esas comisiones: ahí está el día con el que se hizo la cuenta.</p>
+  </footer>
+
+</div>
