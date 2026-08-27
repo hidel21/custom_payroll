@@ -150,13 +150,33 @@ class InvoiceCommissionLine(models.Model):
         Convierte la moneda, que la regla salarial de la base no hacía: una
         comisión en dólares se sumaba como si fueran pesos.
         """
+        # Un concepto que agrupa el pago solo se liquida en sus meses de corte.
+        # Con bloques de N meses contados desde enero, los cortes caen donde
+        # (mes - 1) es múltiplo de N: con 3 son enero, abril, julio y octubre;
+        # con 6, enero y julio. Fuera de ellos no entra, aunque la factura ya
+        # esté cobrada y su bloque cerrado, y eso es justo lo que hace que una
+        # factura cobrada tarde espere al corte siguiente.
+        mes = payslip.date_to.month if payslip.date_to else 0
+        # 0 y 1 son «no agrupa»: entran siempre.
+        periodicidades = [0, 1] + [
+            n for n in range(2, 13) if mes and (mes - 1) % n == 0
+        ]
+
+        dominio_periodicidad = [
+            ("payable_from", "<=", payslip.date_to),
+            ("payment_months", "in", periodicidades),
+        ]
+
         lines = self.sudo().search(
-            [
+            dominio_periodicidad
+            + [
                 ("employee_id", "=", employee.id),
-                # Una comisión en Borrador es una que todavía no está bien
-                # calculada —le falta la cuenta analítica del proyecto, o nadie
-                # ha pulsado Compute—. Pagarla sería pagar un número provisional.
-                ("state", "!=", "draft"),
+                # Dos estados quedan fuera del recibo, por motivos distintos:
+                # Borrador es una comisión que todavía no está bien calculada
+                # —le falta la analítica, o nadie ha pulsado Compute—, y Fuera
+                # de Corte es una que sí está bien pero que Recursos Humanos ha
+                # decidido dejar para más adelante.
+                ("state", "not in", ("draft", "out_of_cycle")),
                 ("settlement_date", "=", False),
                 ("payment_date_invoice", "!=", False),
                 ("payment_date_invoice", "<=", payslip.date_to),
@@ -175,11 +195,17 @@ class InvoiceCommissionLine(models.Model):
         for line in lines:
             amount = line.commission_amount
             if line.currency_id and line.currency_id != company_currency:
+                # La tasa es la del día en que se emitió la factura, no la del
+                # día del cobro ni la de hoy: la comisión nace con la venta, y
+                # esa es la referencia que usa contabilidad. Cobrar tres meses
+                # más tarde no debe cambiar lo que se le paga al comercial.
                 amount = line.currency_id._convert(
                     amount,
                     company_currency,
                     payslip.company_id,
-                    line.payment_date_invoice,
+                    line.invoice_date
+                    or line.payment_date_invoice
+                    or fields.Date.context_today(line),
                 )
             total += amount
         return total

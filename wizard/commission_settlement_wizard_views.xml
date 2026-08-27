@@ -8,6 +8,7 @@
             <form string="Cambiar de estado">
                 <field name="line_ids" invisible="1"/>
                 <field name="currency_id" invisible="1"/>
+                <field name="postponed_count" invisible="1"/>
 
                 <!-- Lo que se va a marcar -->
                 <div class="alert alert-info" role="status"
@@ -55,6 +56,14 @@
                     pago no llegó a salir.
                 </div>
 
+                <div class="alert alert-secondary" role="status"
+                     groups="custom_payroll.group_commission_state_manager"
+                     invisible="postponed_count == 0">
+                    <field name="postponed_count" class="oe_inline" readonly="1"/>
+                    de las seleccionadas quedaron <b>apartadas</b> en su día. Con
+                    <b>Devolver al estado anterior</b> vuelven al circuito.
+                </div>
+
                 <p class="text-muted">
                     Aquí no se escribe el estado a mano: se escriben las fechas y
                     el estado las sigue. Por eso una comisión no puede quedar en
@@ -70,7 +79,7 @@
                             string="Devolver al estado anterior"
                             class="btn-warning" data-hotkey="w"
                             groups="custom_payroll.group_commission_state_manager"
-                            invisible="already_count == 0"
+                            invisible="already_count == 0 and postponed_count == 0"
                             confirm="Se quitará la fecha de liquidación y las comisiones volverán a entrar en el próximo cálculo de nómina. Quedará registrado su nombre y el motivo. ¿Continuar?"/>
                     <button string="Cancelar" class="btn-secondary"
                             special="cancel" data-hotkey="x"/>
