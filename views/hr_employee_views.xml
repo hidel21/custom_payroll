@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- La moneda de pago va en la pestaña de Información del Trabajo, junto a
+         la compañía y el departamento, que es donde alguien la buscaría: es un
+         dato de la relación laboral, no de la persona. -->
+    <record id="view_employee_form_commission_currency" model="ir.ui.view">
+        <field name="name">hr.employee.form.moneda.comisiones</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='hr_settings']" position="inside">
+                <group name="comisiones" string="Información de Comisiones">
+                    <field name="commission_currency_id"
+                        options="{'no_create': True, 'no_open': True}" />
+                    <div class="text-muted" colspan="2">
+                        Moneda en la que se le pagan las comisiones a esta
+                        persona. Sus comisiones se calculan en la moneda de cada
+                        venta y se convierten a esta con la tasa del día que
+                        indique el ajuste de nómina.
+                    </div>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_employee_tree_commission_currency" model="ir.ui.view">
+        <field name="name">hr.employee.list.moneda.comisiones</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_tree" />
+        <field name="arch" type="xml">
+            <field name="company_id" position="after">
+                <field name="commission_currency_id" optional="hide" />
+            </field>
+        </field>
+    </record>
+
+</odoo>

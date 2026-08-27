@@ -33,6 +33,173 @@ class InvoiceCommissionLine(models.Model):
     )
 
     # ------------------------------------------------------------------
+    # La comisión, en la moneda en que se le paga al comercial
+    # ------------------------------------------------------------------
+    # El importe de la comisión (``commission_amount``) nace siempre en la
+    # moneda de la factura, y ``currency_id`` —que el módulo original toma de
+    # la factura— es esa moneda de origen. Lo que falta es la otra punta: en
+    # qué moneda cobra la persona y cuánto le toca en ella.
+
+    employee_currency_id = fields.Many2one(
+        comodel_name="res.currency",
+        string="Moneda del comercial",
+        related="employee_id.commission_currency_id",
+        store=True,
+        index=True,
+        help="Moneda en la que se le paga a esta persona. Se configura en su "
+        "ficha de empleado.",
+    )
+
+    conversion_date = fields.Date(
+        string="Fecha de la tasa",
+        compute="_compute_commission_amount_employee",
+        store=True,
+        help="Día cuya tasa de cambio se usó para convertir. Según el ajuste "
+        "de nómina, la fecha de la factura o la del cobro.",
+    )
+
+    commission_amount_employee = fields.Monetary(
+        string="Comisión a pagar",
+        currency_field="employee_currency_id",
+        compute="_compute_commission_amount_employee",
+        store=True,
+        help="El importe que hay que pagarle al comercial, ya en su moneda. "
+        "Es el que usa la nómina.",
+    )
+
+    conversion_warning = fields.Char(
+        string="Aviso de conversión",
+        compute="_compute_commission_amount_employee",
+        store=True,
+        help="Se rellena cuando la conversión no es de fiar: normalmente "
+        "porque no hay ninguna tasa de cambio registrada para esa fecha.",
+    )
+
+    @api.depends(
+        "commission_amount",
+        "currency_id",
+        "employee_currency_id",
+        "invoice_date",
+        "payment_date_invoice",
+        "company_id",
+    )
+    def _compute_commission_amount_employee(self):
+        """Pasa la comisión a la moneda en que cobra el comercial.
+
+        Tres cosas que parecen detalles y no lo son:
+
+        * **Misma moneda, mismo importe.** Si se vende y se paga en la misma
+          moneda no se convierte nada. Pasar por el conversor solo para volver
+          al punto de partida introduce redondeos que luego nadie sabe explicar.
+        * **La tasa es la de un día concreto**, el que diga el ajuste de
+          nómina: el de la factura o el del cobro. Nunca la de hoy, que haría
+          que una comisión cambiara de importe con solo volver a mirarla.
+        * **Sin tasa no hay conversión fiable.** Odoo, cuando no encuentra
+          ninguna, aplica 1:1 en silencio y el importe resultante parece
+          correcto. Aquí eso se detecta y se marca para que alguien lo revise.
+        """
+        criterio = (
+            self.env["ir.config_parameter"]
+            .sudo()
+            .get_param("custom_payroll.commission_conversion_basis", "invoice")
+        )
+        for line in self:
+            destino = line.employee_currency_id
+            origen = line.currency_id
+
+            fecha = (
+                line.payment_date_invoice or line.invoice_date
+                if criterio == "payment"
+                else line.invoice_date or line.payment_date_invoice
+            )
+            line.conversion_date = fecha
+
+            if not destino or not origen or destino == origen:
+                # Sin moneda de destino todavía, o es la misma: el importe es
+                # el que ya hay. Nada que convertir y nada que avisar.
+                line.commission_amount_employee = line.commission_amount
+                line.conversion_warning = False
+                continue
+
+            if not fecha:
+                line.commission_amount_employee = line.commission_amount
+                line.conversion_warning = (
+                    "Sin fecha de factura ni de cobro: no hay día con el que "
+                    "buscar la tasa, así que el importe está sin convertir."
+                )
+                continue
+
+            convertido = origen._convert(
+                line.commission_amount,
+                destino,
+                line.company_id or self.env.company,
+                fecha,
+            )
+            line.commission_amount_employee = convertido
+            line.conversion_warning = line._conversion_warning(
+                origen, destino, fecha, line.commission_amount, convertido
+            )
+
+    def _conversion_warning(self, origen, destino, fecha, importe, convertido):
+        """Avisa cuando la tasa aplicada no es de fiar.
+
+        La comprobación no mira si existen registros de tasa, sino **la tasa
+        que de verdad se aplicó**: cuando Odoo no encuentra ninguna devuelve el
+        mismo importe, y eso es indistinguible de una conversión correcta.
+        Mirar el resultado los distingue, y de paso cubre el caso de que falte
+        la tasa de cualquiera de las dos monedas.
+
+        Un peso colombiano no vale un dólar. Si el importe sale idéntico
+        habiendo cambiado de moneda, la conversión no se hizo.
+        """
+        self.ensure_one()
+        if importe and abs(convertido - importe) < 1e-9:
+            return (
+                "Sin conversión real: %s y %s han quedado con el mismo importe, "
+                "así que falta la tasa de cambio para el %s. Revíselo antes de "
+                "pagar." % (origen.name, destino.name, fecha)
+            )
+
+        Rate = self.env["res.currency.rate"].sudo()
+        moneda_compania = (self.company_id or self.env.company).currency_id
+        for moneda in (origen, destino):
+            if moneda == moneda_compania:
+                # La moneda de la compañía es la referencia: siempre vale 1.
+                continue
+            ultima = Rate.search(
+                [("currency_id", "=", moneda.id), ("name", "<=", fecha)],
+                order="name desc",
+                limit=1,
+            )
+            if ultima and (fecha - ultima.name).days > 7:
+                return (
+                    "La tasa de %s más cercana es del %s, %s días antes de la "
+                    "fecha usada."
+                    % (moneda.name, ultima.name, (fecha - ultima.name).days)
+                )
+        return False
+
+    @api.model
+    def _recompute_conversion(self):
+        """Rehace la conversión de todo lo que aún no se ha liquidado.
+
+        Hace falta cuando cambia algo de lo que el cálculo no puede depender
+        por sí solo: el criterio de fecha, que es un parámetro de
+        configuración, o las tasas de cambio, que llegan por su cuenta.
+        """
+        lines = self.sudo().search([("state", "not in", ("paid", "closed"))])
+        if lines:
+            self.env.add_to_compute(
+                self._fields["commission_amount_employee"], lines
+            )
+            lines.flush_recordset()
+        _logger.info(
+            "custom_payroll: conversión rehecha en %s comisión(es) no liquidadas.",
+            len(lines),
+        )
+        return len(lines)
+
+    # ------------------------------------------------------------------
     # Quién corrigió el estado a mano
     # ------------------------------------------------------------------
     # El estado se deduce de las fechas, así que tocarlo a mano es siempre una
@@ -190,21 +357,26 @@ class InvoiceCommissionLine(models.Model):
 
         lines.write({"payslip_id": payslip.id})
 
-        company_currency = payslip.company_id.currency_id
+        # El importe que se paga es el ya convertido a la moneda del comercial,
+        # nunca el original de la factura. La conversión vive en la propia
+        # comisión —con su fecha y su aviso si la tasa no era de fiar—, así que
+        # aquí solo se suma.
+        moneda_recibo = payslip.company_id.currency_id
         total = 0.0
         for line in lines:
-            amount = line.commission_amount
-            if line.currency_id and line.currency_id != company_currency:
-                # La tasa es la del día en que se emitió la factura, no la del
-                # día del cobro ni la de hoy: la comisión nace con la venta, y
-                # esa es la referencia que usa contabilidad. Cobrar tres meses
-                # más tarde no debe cambiar lo que se le paga al comercial.
-                amount = line.currency_id._convert(
+            amount = line.commission_amount_employee or line.commission_amount
+            moneda = line.employee_currency_id or line.currency_id
+
+            # Último salto: si al comercial se le paga en una moneda y el recibo
+            # se emite en otra, se lleva a la del recibo. Con la moneda de pago
+            # bien configurada esto no debería hacer falta casi nunca.
+            if moneda and moneda_recibo and moneda != moneda_recibo:
+                amount = moneda._convert(
                     amount,
-                    company_currency,
+                    moneda_recibo,
                     payslip.company_id,
-                    line.invoice_date
-                    or line.payment_date_invoice
+                    line.conversion_date
+                    or line.invoice_date
                     or fields.Date.context_today(line),
                 )
             total += amount
