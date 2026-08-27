@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Se cuelga del bloque de Nómina que ya existe en lugar de abrir una
+         sección nueva: es un ajuste de cómo se paga, y ahí es donde lo va a
+         buscar quien administra la nómina. -->
+    <record id="res_config_settings_view_form_commission" model="ir.ui.view">
+        <field name="name">res.config.settings.form.comisiones</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="om_hr_payroll.res_config_settings_view_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//div[@data-key='om_hr_payroll']" position="inside">
+                <h2>Comisiones</h2>
+                <div class="row mt16 o_settings_container" id="custom_payroll_comisiones">
+                    <div class="col-12 o_setting_box">
+                        <div class="o_setting_right_pane">
+                            <label for="commission_conversion_basis"
+                                string="Tasa de cambio de las comisiones" />
+                            <div class="text-muted">
+                                Las comisiones se calculan en la moneda de cada
+                                venta y se pagan en la moneda de cada comercial.
+                                Elija con qué día se toma la tasa. Al cambiarlo
+                                se recalculan las que no estén liquidadas.
+                            </div>
+                            <div class="mt8">
+                                <field name="commission_conversion_basis" widget="radio" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

@@ -33,7 +33,7 @@ distintas, y mezclarlos obligaba a tocar contabilidad para arreglar nómina.
     'author': "Hidelberg Martinez",
     'website': "https://intelli-next.com",
     'category': 'Human Resources/Payroll',
-    'version': '18.0.1.10.0',
+    'version': '18.0.1.11.0',
     'license': 'LGPL-3',
     'depends': [
         'account_custom',
@@ -53,6 +53,8 @@ distintas, y mezclarlos obligaba a tocar contabilidad para arreglar nómina.
         'wizard/commission_settlement_wizard_views.xml',
         'wizard/commission_report_wizard_views.xml',
         'views/invoice_commission_line_views.xml',
+        'views/hr_employee_views.xml',
+        'views/res_config_settings_views.xml',
     ],
     'post_init_hook': 'post_init_hook',
     'installable': True,

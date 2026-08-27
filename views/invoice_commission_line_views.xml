@@ -16,6 +16,15 @@
         <field name="arch" type="xml">
             <field name="payment_date_invoice" position="after">
                 <field name="settlement_date" optional="show" />
+                <!-- Las dos puntas de la conversión, siempre juntas: sin el
+                     código de moneda al lado, dos cifras distintas en la misma
+                     fila no significan nada. -->
+                <field name="currency_id" optional="show" string="Moneda venta" />
+                <field name="employee_currency_id" optional="show" string="Moneda pago" />
+                <field name="commission_amount_employee" optional="show"
+                    sum="Total a pagar" />
+                <field name="conversion_date" optional="hide" />
+                <field name="conversion_warning" optional="hide" />
                 <!-- Ocultas por defecto: solo interesan cuando hay que auditar
                      una corrección, y la lista ya va sobrada de columnas. -->
                 <field name="state_change_uid" optional="hide" />
@@ -65,13 +74,17 @@
                                  ('settlement_date', '=', False)]" />
                 <filter name="filter_liquidadas" string="Ya liquidadas"
                     domain="[('settlement_date', '!=', False)]" />
-                <filter name="filter_sin_importe" string="Calculadas en cero"
+                <filter name="filter_conversion" string="Conversión a revisar"
+                    domain="[('conversion_warning', '!=', False)]" />
+                                <filter name="filter_sin_importe" string="Calculadas en cero"
                     domain="[('state', '!=', 'draft'),
                                  ('commission_amount', '=', 0)]" />
                 <separator />
             </xpath>
             <xpath expr="//group" position="inside">
-                <filter name="group_settlement" string="Fecha de Liquidación"
+                <filter name="group_employee_currency" string="Moneda de pago"
+                    context="{'group_by': 'employee_currency_id'}" />
+                                <filter name="group_settlement" string="Fecha de Liquidación"
                     context="{'group_by': 'settlement_date'}" />
             </xpath>
         </field>
