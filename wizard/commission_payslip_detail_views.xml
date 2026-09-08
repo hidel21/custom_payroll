@@ -48,6 +48,9 @@
                                groups="base.group_multi_currency" optional="hide"/>
                         <field name="conversion_warning" string="Aviso de tasa"
                                optional="hide"/>
+                        <field name="payslip_locked" string="Congelada"
+                               widget="boolean_toggle" readonly="1"
+                               optional="hide"/>
                         <field name="state" widget="badge" string="Estado"
                                decoration-success="state == 'paid'"
                                decoration-info="state == 'client_paid'"
