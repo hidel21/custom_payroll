@@ -30,9 +30,11 @@
                 <field name="payslip_id" invisible="1"/>
                 <field name="currency_id" invisible="1"/>
 
-                <field name="line_ids" readonly="1" nolabel="1">
+                <field name="line_ids" invisible="1"/>
+                <field name="detail_ids" readonly="1" nolabel="1">
                     <list string="Facturas" create="false" delete="false"
                           decoration-muted="state == 'closed'">
+                        <field name="item" string="#"/>
                         <field name="invoice_number" string="Factura"/>
                         <field name="invoice_date" string="Fecha"/>
                         <field name="partner_id" string="Cliente"
@@ -49,8 +51,7 @@
                         <field name="conversion_warning" string="Aviso de tasa"
                                optional="hide"/>
                         <field name="payslip_locked" string="Congelada"
-                               widget="boolean_toggle" readonly="1"
-                               optional="hide"/>
+                               widget="boolean_toggle" readonly="1" optional="hide"/>
                         <field name="state" widget="badge" string="Estado"
                                decoration-success="state == 'paid'"
                                decoration-info="state == 'client_paid'"
@@ -68,13 +69,13 @@
                 <footer>
                     <button name="action_download_xlsx" type="object"
                             string="Descargar Excel" class="btn-primary"
-                            invisible="not line_ids"/>
+                            invisible="not detail_ids"/>
                     <button name="action_download_pdf" type="object"
                             string="Descargar PDF" class="btn-secondary"
-                            invisible="not line_ids"/>
+                            invisible="not detail_ids"/>
                     <button name="action_open_list" type="object"
                             string="Ver la lista completa" class="btn-link"
-                            invisible="not line_ids"/>
+                            invisible="not detail_ids"/>
                     <button string="Cerrar" class="btn-secondary" special="cancel"/>
                 </footer>
             </form>

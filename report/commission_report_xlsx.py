@@ -7,6 +7,10 @@ from odoo import models
 # Las columnas del Reporte de Comisiones, en el mismo orden en que se ven en
 # pantalla. El ancho va en caracteres, que es la unidad de xlsxwriter.
 COLUMNAS = [
+    # Un número de orden correlativo, lo primero. No sale de ningún campo: se
+    # cuenta al escribir. Lo pidió Xilean para poder contar las facturas de un
+    # vistazo al auditar, que con listados largos es lo primero que se hace.
+    ('#', 'item', 5),
     ('Empleado', 'employee', 30),
     ('Compañía', 'company', 22),
     ('Departamento', 'department', 20),
@@ -87,8 +91,9 @@ class CommissionReportXlsx(models.AbstractModel):
                         len(COLUMNAS) - 1)
 
         fila = fila_cabecera + 1
-        for line in lines:
+        for numero, line in enumerate(lines, start=1):
             valores = {
+                'item': numero,
                 'employee': line.employee_id.name or '',
                 'company': line.company_id.name or '',
                 'department': line.department_id.name or '',

@@ -44,6 +44,7 @@
                     <table class="rc">
                         <thead>
                             <tr>
+                                <th class="n">#</th>
                                 <th>Cliente</th>
                                 <th>Factura</th>
                                 <th>Periodo</th>
@@ -62,7 +63,7 @@
                         <tbody>
                             <t t-foreach="grupos" t-as="g">
                                 <tr class="emp">
-                                    <td colspan="8">
+                                    <td colspan="9">
                                         <span t-out="g['empleado'].name"/>
                                         <span> — </span>
                                         <span t-out="g['empleado'].department_id.name or 'sin departamento'"/>
@@ -77,6 +78,7 @@
                                     <td/>
                                 </tr>
                                 <tr t-foreach="g['lineas']" t-as="l">
+                                    <td class="n" t-out="l_index + 1"/>
                                     <td t-out="l.partner_id.name"/>
                                     <td t-out="l.invoice_id.name"/>
                                     <td t-out="l.commission_period_name or ''"/>
@@ -99,7 +101,7 @@
                                 </tr>
                             </t>
                             <tr class="tot">
-                                <td colspan="8">TOTAL</td>
+                                <td colspan="9">TOTAL</td>
                                 <td class="n" t-out="total_base"
                                     t-options='{"widget": "float", "precision": 2}'/>
                                 <td colspan="2"/>
