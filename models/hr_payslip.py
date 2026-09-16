@@ -1,4 +1,8 @@
+import logging
+
 from odoo import _, api, fields, models
+
+_logger = logging.getLogger(__name__)
 
 # Códigos de regla salarial que llevan comisiones. Se deja como parámetro
 # porque no es una constante del dominio: cada compañía puede nombrar sus
@@ -63,6 +67,73 @@ class HrPayslip(models.Model):
         codigos = self._commission_rule_codes()
         lineas = self.line_ids.filtered(lambda l: l.code in codigos)
         return sum(lineas.mapped("total"))
+
+    # ------------------------------------------------------------------
+    # Confirmar la hoja liquida sus comisiones
+    # ------------------------------------------------------------------
+
+    def _settle_commission_lines(self):
+        """Sella la fecha de liquidación de las comisiones de este recibo.
+
+        Hasta ahora esa fecha solo la ponía el lote, al generar los
+        comprobantes. Y los lotes se quedan en borrador: de las 145 comisiones
+        enlazadas a un recibo confirmado, ninguna tenía fecha. El resultado era
+        que Recursos Humanos confirmaba la hoja, daba la comisión por pagada, y
+        el sistema seguía diciendo «Por Liquidar» indefinidamente.
+
+        El hecho que liquida la comisión es que se pagó en un recibo, y eso
+        ocurre al confirmarlo. El lote sigue haciendo su parte —cerrar— sin
+        cambios: solo rellena las que aún no tengan fecha.
+
+        Se usa ``date_to`` y no el día de hoy porque la comisión se pagó en ese
+        periodo de nómina, no el día en que alguien pulsó el botón.
+        """
+        Comision = self.env["invoice.commission.line"].sudo()
+        for recibo in self:
+            lineas = Comision.search(
+                [("payslip_id", "=", recibo.id), ("settlement_date", "=", False)]
+            )
+            if not lineas:
+                continue
+            lineas.write(
+                {"settlement_date": recibo.date_to or fields.Date.context_today(recibo)}
+            )
+            _logger.info(
+                "custom_payroll: %s liquida %s comisión(es).",
+                recibo.number or recibo.id,
+                len(lineas),
+            )
+
+    def _unsettle_commission_lines(self):
+        """Devuelve a pendiente lo que este recibo había liquidado.
+
+        Si el recibo deja de estar confirmado, su comisión no está pagada. Sin
+        esto quedaría marcada como liquidada para siempre y no la recogería
+        ningún recibo posterior: dinero que el comercial no cobra y que nadie
+        echa en falta, porque el sistema lo da por pagado.
+        """
+        Comision = self.env["invoice.commission.line"].sudo()
+        for recibo in self:
+            lineas = Comision.search(
+                [("payslip_id", "=", recibo.id), ("settlement_date", "!=", False)]
+            )
+            if lineas:
+                lineas.write({"settlement_date": False})
+
+    def action_payslip_done(self):
+        res = super().action_payslip_done()
+        self._settle_commission_lines()
+        return res
+
+    def action_payslip_cancel(self):
+        res = super().action_payslip_cancel()
+        self._unsettle_commission_lines()
+        return res
+
+    def action_payslip_draft(self):
+        res = super().action_payslip_draft()
+        self._unsettle_commission_lines()
+        return res
 
     def action_view_commission_detail(self):
         """Abre el desglose en una ventana emergente sobre el recibo."""
