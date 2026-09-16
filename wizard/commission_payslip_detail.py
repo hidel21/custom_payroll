@@ -83,7 +83,16 @@ class CommissionPayslipDetail(models.TransientModel):
     # Totales
     # ------------------------------------------------------------------
 
-    @api.depends("line_ids", "payslip_id")
+    @api.depends(
+        "line_ids",
+        "line_ids.commission_amount",
+        "line_ids.commission_amount_employee",
+        "line_ids.settlement_date",
+        "line_ids.state",
+        "payslip_id",
+        "payslip_id.state",
+        "payslip_id.line_ids.total",
+    )
     def _compute_totales(self):
         """Suma las facturas y la contrasta con lo que dice el recibo.
 

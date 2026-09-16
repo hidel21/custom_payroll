@@ -11,6 +11,11 @@ _logger = logging.getLogger(__name__)
 PARAMETRO_REGLAS = "custom_payroll.commission_rule_codes"
 REGLAS_POR_DEFECTO = "COMISIONES"
 
+# Estados de recibo en los que su comisión ya está pagada. El recibo se confirma
+# para cerrar el mes y puede quedarse ahí semanas antes de marcarse como pagado;
+# en ambos el dinero ya salió, así que los dos liquidan.
+ESTADOS_LIQUIDADOS = ("done", "paid")
+
 
 class HrPayslip(models.Model):
     """Enlaza el recibo con las comisiones que lo componen.
@@ -120,19 +125,43 @@ class HrPayslip(models.Model):
             if lineas:
                 lineas.write({"settlement_date": False})
 
-    def action_payslip_done(self):
-        res = super().action_payslip_done()
-        self._settle_commission_lines()
-        return res
+    def write(self, vals):
+        """El estado de la comisión sigue al del recibo, venga por donde venga.
 
-    def action_payslip_cancel(self):
-        res = super().action_payslip_cancel()
-        self._unsettle_commission_lines()
-        return res
+        Engancharse a los botones no basta. El estado del recibo se escribe
+        desde varios sitios —``action_payslip_done``, el cierre del lote, y una
+        vía de la localización colombiana que lo pone en «Pagada» sin pasar por
+        ningún botón—, y cada uno que se olvide deja comisiones diciendo lo que
+        no es.
 
-    def action_payslip_draft(self):
-        res = super().action_payslip_draft()
-        self._unsettle_commission_lines()
+        Todos acaban aquí, así que aquí es donde hay que mirar. Se comparan los
+        estados antes y después para actuar solo sobre los recibos que de verdad
+        cambiaron: ``write`` se llama constantemente por motivos que no tienen
+        nada que ver.
+        """
+        if "state" not in vals:
+            return super().write(vals)
+
+        antes = {recibo.id: recibo.state for recibo in self}
+        res = super().write(vals)
+
+        liquidar = self.browse()
+        soltar = self.browse()
+        for recibo in self:
+            if recibo.state == antes.get(recibo.id):
+                continue
+            if recibo.state in ESTADOS_LIQUIDADOS:
+                liquidar |= recibo
+            elif antes.get(recibo.id) in ESTADOS_LIQUIDADOS:
+                # Solo se suelta si venía de estar liquidado. Pasar de borrador
+                # a cancelado no tiene nada que soltar, y buscar por buscar en
+                # cada guardado es trabajo tirado.
+                soltar |= recibo
+
+        if liquidar:
+            liquidar._settle_commission_lines()
+        if soltar:
+            soltar._unsettle_commission_lines()
         return res
 
     def action_view_commission_detail(self):
