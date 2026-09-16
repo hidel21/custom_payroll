@@ -1,0 +1,293 @@
+<title>Probar nómina en pruebas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bitter:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=Source+Sans+3:wght@400;600;700&display=swap">
+
+<style>
+  :root {
+    --paper:#f6f8f7; --sheet:#ffffff; --sunk:#eef2f0;
+    --ink:#16211d; --ink-soft:#3d4b46; --muted:#67766f;
+    --rule:#dbe3df; --rule-firm:#c2cdc8;
+    --accent:#0f6b52; --accent-ink:#0a4c3a; --accent-wash:#e2efe9;
+    --warn:#8a5a06; --warn-wash:#f7ecd6;
+    --danger:#9c2b2b; --danger-wash:#f6dedc;
+    --f-display:"Bitter",Georgia,serif;
+    --f-body:"Source Sans 3",-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
+    --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:#0d1412; --sheet:#151e1b; --sunk:#1d2925;
+      --ink:#e4ebe7; --ink-soft:#c0ccc6; --muted:#8b9a93;
+      --rule:#2b3733; --rule-firm:#3c4a45;
+      --accent:#57c39d; --accent-ink:#8fdcbe; --accent-wash:#17322a;
+      --warn:#e0ac57; --warn-wash:#33280f;
+      --danger:#e08a85; --danger-wash:#361a19;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:#0d1412; --sheet:#151e1b; --sunk:#1d2925;
+    --ink:#e4ebe7; --ink-soft:#c0ccc6; --muted:#8b9a93;
+    --rule:#2b3733; --rule-firm:#3c4a45;
+    --accent:#57c39d; --accent-ink:#8fdcbe; --accent-wash:#17322a;
+    --warn:#e0ac57; --warn-wash:#33280f;
+    --danger:#e08a85; --danger-wash:#361a19;
+  }
+  * { box-sizing:border-box; }
+  body { background:var(--paper); color:var(--ink); font-family:var(--f-body);
+         font-size:16.5px; line-height:1.52; -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:52rem; margin:0 auto; padding:2.75rem 1.5rem 5rem; }
+
+  .head { border-bottom:2px solid var(--ink); padding-bottom:1.3rem; }
+  .eyebrow { font-family:var(--f-mono); font-size:.7rem; letter-spacing:.1em;
+             text-transform:uppercase; color:var(--accent); margin:0 0 .75rem; }
+  h1 { font-family:var(--f-display); font-weight:700;
+       font-size:clamp(1.85rem,4.5vw,2.45rem); line-height:1.08;
+       letter-spacing:-.015em; margin:0 0 .7rem; text-wrap:balance; }
+  .sub { color:var(--ink-soft); margin:0; max-width:36rem; }
+
+  .acceso { display:grid; grid-template-columns:repeat(auto-fit,minmax(11rem,1fr));
+            gap:1px; background:var(--rule); border:1px solid var(--rule); margin:1.4rem 0 0; }
+  .acceso > div { background:var(--sheet); padding:.65rem .9rem; }
+  .acceso dt { font-family:var(--f-mono); font-size:.65rem; letter-spacing:.1em;
+               text-transform:uppercase; color:var(--muted); margin:0 0 .22rem; }
+  .acceso dd { margin:0; font-weight:600; font-size:.93rem; }
+
+  h2 { font-family:var(--f-display); font-weight:600; font-size:1.3rem;
+       margin:2.6rem 0 .3rem; padding-bottom:.4rem; border-bottom:1px solid var(--rule-firm); }
+  .h2sub { color:var(--muted); font-size:.93rem; margin:.45rem 0 1rem; max-width:36rem; }
+  p { margin:0 0 .8rem; max-width:36rem; }
+  strong { font-weight:700; }
+  .mono, code { font-family:var(--f-mono); font-size:.87em; background:var(--sunk);
+                padding:.08em .35em; border-radius:2px; }
+
+  .nota { padding:.75rem .95rem; margin:1rem 0; max-width:36rem;
+          border-left:3px solid; font-size:.94rem; }
+  .nota p:last-child { margin-bottom:0; }
+  .nota b { display:block; font-family:var(--f-mono); font-size:.65rem; letter-spacing:.1em;
+            text-transform:uppercase; margin-bottom:.28rem; font-weight:500; }
+  .nota.warn { background:var(--warn-wash); border-color:var(--warn); }
+  .nota.warn b { color:var(--warn); }
+  .nota.danger { background:var(--danger-wash); border-color:var(--danger); }
+  .nota.danger b { color:var(--danger); }
+  .nota.ok { background:var(--accent-wash); border-color:var(--accent); }
+  .nota.ok b { color:var(--accent-ink); }
+
+  .caso { display:grid; grid-template-columns:2.6rem 1fr; gap:0 1rem;
+          padding:1.05rem 0; border-bottom:1px solid var(--rule); }
+  .caso:last-of-type { border-bottom:none; }
+  .caso > .id { font-family:var(--f-mono); font-weight:500; font-size:.82rem;
+                color:var(--accent); padding-top:.22rem; letter-spacing:.03em; }
+  .caso h3 { font-family:var(--f-body); font-weight:700; font-size:1.02rem; margin:0 0 .3rem; }
+  .caso ol, .caso ul { margin:0 0 .5rem; padding-left:1.15rem; max-width:34rem; }
+  .caso li { margin-bottom:.28rem; font-size:.96rem; }
+  .caso > .body > :last-child { margin-bottom:0; }
+  .ver { display:block; margin-top:.4rem; padding:.55rem .8rem; background:var(--sheet);
+         border:1px solid var(--rule-firm); border-left:3px solid var(--accent);
+         font-size:.94rem; max-width:34rem; }
+  .ver b { display:block; font-family:var(--f-mono); font-size:.63rem; letter-spacing:.1em;
+           text-transform:uppercase; color:var(--accent-ink); margin-bottom:.25rem; font-weight:500; }
+  :root:not([data-theme="light"]) .ver b { color:var(--accent); }
+  @media (prefers-color-scheme: dark) { .ver b { color:var(--accent); } }
+
+  .scroll { overflow-x:auto; margin:.9rem 0 1.1rem; }
+  table { border-collapse:collapse; width:100%; min-width:28rem; font-size:.91rem; }
+  th, td { text-align:left; padding:.45rem .8rem .45rem 0; border-bottom:1px solid var(--rule); }
+  thead th { font-size:.7rem; font-weight:700; letter-spacing:.07em; text-transform:uppercase;
+             color:var(--muted); border-bottom:1.5px solid var(--rule-firm); white-space:nowrap; }
+  td.num, th.num { text-align:right; font-variant-numeric:tabular-nums; padding-right:0; }
+  td.acc { font-family:var(--f-mono); font-size:.85rem; white-space:nowrap; }
+  tbody tr:last-child td { border-bottom:none; }
+
+  ul.check { list-style:none; padding-left:0; margin:.6rem 0 0; }
+  ul.check li { display:grid; grid-template-columns:1.1rem 1fr; gap:.6rem;
+                align-items:start; margin-bottom:.35rem; font-size:.95rem; }
+  ul.check li::before { content:""; display:block; width:.9rem; height:.9rem; margin-top:.3rem;
+                        border:1.5px solid var(--rule-firm); background:var(--sheet); }
+
+  footer { margin-top:3rem; padding-top:1rem; border-top:1px solid var(--rule-firm);
+           font-size:.86rem; color:var(--muted); max-width:36rem; }
+  @media (max-width:32rem) { .caso { grid-template-columns:1fr; gap:.4rem; }
+                             .caso > .id { padding-top:0; } }
+</style>
+
+<div class="wrap">
+
+  <header class="head">
+    <p class="eyebrow">Entorno de pruebas · OV18_INTELLIDM · 16 de septiembre de 2026</p>
+    <h1>Probar nómina en pruebas</h1>
+    <p class="sub">Siete casos sobre lo que se subió: el desglose de comisiones en el recibo, el bloqueo que impide que se recalculen solas, la liquidación de prestaciones y los préstamos a trabajadores.</p>
+
+    <dl class="acceso">
+      <div><dt>Dirección</dt><dd>54.198.146.146:1869</dd></div>
+      <div><dt>Base</dt><dd>OV18_INTELLIDM</dd></div>
+      <div><dt>Compañía</dt><dd>Intelli Next S.A.S</dd></div>
+    </dl>
+  </header>
+
+  <div class="nota danger">
+    <b>Antes de nada: hoy no se puede entrar desde fuera</b>
+    <p>Lo comprobé esta mañana y el puerto 1869 sigue reiniciando la conexión. No es del servidor —Odoo escucha bien, el cortafuegos de la máquina está inactivo y no hay proxy—: <strong>falta abrir la regla de entrada en el grupo de seguridad de AWS</strong>. Hasta que eso pase, este guion solo se puede recorrer entrando por SSH.</p>
+  </div>
+
+  <div class="nota ok">
+    <b>Se puede romper</b>
+    <p>La base está neutralizada: no salen correos, no se envía nada a la DIAN ni a ningún banco. Equivocarse aquí no cuesta nada, y es para lo que está.</p>
+  </div>
+
+  <h2>Parte 1 — Ver de dónde salen las comisiones</h2>
+  <p class="h2sub">Era lo que se pidió en la reunión del 8: poder ver el detalle sin abrir otra pestaña.</p>
+
+  <div class="caso">
+    <div class="id">C1</div>
+    <div class="body">
+      <h3>Abrir el desglose desde el recibo</h3>
+      <ol>
+        <li><strong>Nómina → Recibos de nómina</strong>, y abra el recibo <span class="mono">194</span> de Genesis Orias.</li>
+        <li>Pestaña <strong>Cálculo salarial</strong>. Busque la línea <span class="mono">COMISIONES</span>.</li>
+        <li>Al final de esa fila hay una <strong>lupa</strong>. Púlsela.</li>
+      </ol>
+      <span class="ver"><b>Debe ver</b>
+        Una ventana emergente con <strong>48 facturas</strong>: número, fecha, cliente, fecha de cobro, importe original y convertido, y estado. Arriba a la derecha del recibo hay además un botón con el mismo número.
+      </span>
+    </div>
+  </div>
+
+  <div class="caso">
+    <div class="id">C2</div>
+    <div class="body">
+      <h3>Descargar solo lo de ese empleado</h3>
+      <ol>
+        <li>Con la ventana abierta, pulse <strong>Descargar Excel</strong>.</li>
+      </ol>
+      <span class="ver"><b>Debe ver</b>
+        Un Excel con esas 48 facturas y ni una más. Era el requisito: no tener que ir a la sección general de informes y filtrar a mano.
+      </span>
+    </div>
+  </div>
+
+  <div class="caso">
+    <div class="id">C3</div>
+    <div class="body">
+      <h3>El aviso de descuadre</h3>
+      <p>En la misma ventana, arriba, hay una franja amarilla. Compare las dos cifras del pie.</p>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Recibo</th><th>Empleado</th><th class="num">Recibo dice</th><th class="num">Facturas suman</th></tr></thead>
+          <tbody>
+            <tr><td class="acc">194</td><td>Genesis Orias</td><td class="num">3.028.008</td><td class="num">3.065.966</td></tr>
+            <tr><td class="acc">195</td><td>Óscar Cely</td><td class="num">601.578</td><td class="num">567.276</td></tr>
+            <tr><td class="acc">193</td><td>Andrés Caicedo</td><td class="num">258.779</td><td class="num">233.290</td></tr>
+            <tr><td class="acc">197</td><td>Diego Cruz</td><td class="num">57.018</td><td class="num">107.231</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <span class="ver"><b>Debe ver</b>
+        La franja diciendo cuánto se separan. <strong>Esos descuadres son anteriores a la corrección</strong>: son la huella del fallo, no un fallo nuevo. Lo que se arregló impide que aparezcan más, no repara los que ya estaban.
+      </span>
+    </div>
+  </div>
+
+  <h2>Parte 2 — Que no se recalculen solas</h2>
+  <p class="h2sub">El fallo que reportó Recursos Humanos: confirmar la hoja no congelaba nada, y las comisiones seguían moviéndose días después.</p>
+
+  <div class="caso">
+    <div class="id">C4</div>
+    <div class="body">
+      <h3>Una comisión de un recibo confirmado no se puede mover</h3>
+      <ol>
+        <li>En el desglose del recibo <span class="mono">194</span>, active la columna oculta <strong>Congelada</strong> con el icono de columnas.</li>
+        <li>Anote el importe total de comisiones del recibo.</li>
+        <li>Vaya a <strong>Contabilidad → Comisiones</strong>, abra una de esas facturas y pulse <strong>Recalcular comisiones</strong> sobre ella.</li>
+        <li>Vuelva al recibo y compare.</li>
+      </ol>
+      <span class="ver"><b>Debe ver</b>
+        Todas las filas marcadas como congeladas, y el importe del recibo <strong>sin cambiar</strong>. Antes de la corrección, ese recálculo le habría movido la cifra.
+      </span>
+    </div>
+  </div>
+
+  <div class="caso">
+    <div class="id">C5</div>
+    <div class="body">
+      <h3>Devolver el recibo a borrador libera la comisión</h3>
+      <ol>
+        <li>Sobre un recibo confirmado, pulse <strong>Restablecer a borrador</strong>.</li>
+        <li>Mire de nuevo la columna Congelada en el desglose.</li>
+      </ol>
+      <span class="ver"><b>Debe ver</b>
+        Las filas dejan de estar congeladas. Es a propósito: si el recibo vuelve a estar abierto, su comisión tiene que poder recalcularse. Deje el recibo como estaba al terminar.
+      </span>
+    </div>
+  </div>
+
+  <h2>Parte 3 — Prestaciones sociales</h2>
+  <p class="h2sub">Lo validado con contabilidad el 8 de septiembre.</p>
+
+  <div class="caso">
+    <div class="id">C6</div>
+    <div class="body">
+      <h3>Liquidar una prestación</h3>
+      <ol>
+        <li><strong>Contabilidad → Contabilidad → Prestaciones sociales → Liquidaciones → Nuevo</strong>.</li>
+        <li>Prestación <strong>Prima de servicios</strong>, fecha de corte hoy.</li>
+        <li><strong>Cargar empleados</strong>.</li>
+      </ol>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Prestación</th><th class="num">Empleados</th><th class="num">Acumulado</th></tr></thead>
+          <tbody>
+            <tr><td>Cesantías</td><td class="num">4</td><td class="num">2.652.270</td></tr>
+            <tr><td>Intereses sobre cesantías</td><td class="num">11</td><td class="num">1.451.191</td></tr>
+            <tr><td>Prima de servicios</td><td class="num">11</td><td class="num">11.562.474</td></tr>
+            <tr><td>Vacaciones</td><td class="num">11</td><td class="num">5.734.274</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <span class="ver"><b>Debe ver</b>
+        Esas cifras, salvo que alguien haya contabilizado algo en medio. Con corte en septiembre saldrá la <strong>franja amarilla</strong> avisando de que la prima se liquida en junio y diciembre: avisa y deja seguir, que es lo acordado para los retiros a mitad de año.
+      </span>
+    </div>
+  </div>
+
+  <h2>Parte 4 — Préstamos a trabajadores</h2>
+  <p class="h2sub">Lo nuevo. La analista propone el plan y decide la cuota de cada mes.</p>
+
+  <div class="caso">
+    <div class="id">C7</div>
+    <div class="body">
+      <h3>Prestar, descontar menos de lo previsto, y que cuadre</h3>
+      <ol>
+        <li>Abra la ficha de <strong>Andrés Caicedo</strong> y vaya a la pestaña <strong>Préstamos</strong>.</li>
+        <li>Cree uno de <strong>1.000.000</strong> en <strong>4 cuotas</strong>, primera cuota el mes que viene. Apruebe y ponga en curso.</li>
+        <li>Genere su recibo del mes de la primera cuota y calcule la hoja.</li>
+        <li>En la pestaña de entradas, baje <span class="mono">DESCUENTOPRESTAMO</span> de 250.000 a <strong>100.000</strong> y vuelva a calcular.</li>
+        <li>Confirme el recibo y vuelva al préstamo.</li>
+      </ol>
+      <span class="ver"><b>Debe ver</b>
+        Que su cifra <strong>se respeta aunque recalcule</strong> — el recibo descuenta 100.000, no 250.000. Y que al confirmar, la cuota del mes queda en 100.000 cobrada y <strong>los 150.000 que faltaban aparecen como cuota nueva el mes siguiente</strong>. El plan sigue sumando el millón: el préstamo se estira, no se pierde saldo.
+      </span>
+    </div>
+  </div>
+
+  <h2>Al terminar</h2>
+  <ul class="check">
+    <li>C1 · La lupa abre el desglose con las 48 facturas</li>
+    <li>C2 · El Excel trae solo lo de ese empleado</li>
+    <li>C3 · El aviso de descuadre sale y se entiende</li>
+    <li>C4 · Recalcular no mueve un recibo confirmado</li>
+    <li>C5 · Volver a borrador libera la comisión</li>
+    <li>C6 · La liquidación carga los empleados con importes creíbles</li>
+    <li>C7 · El préstamo respeta la cuota que puso usted y cuadra</li>
+  </ul>
+
+  <div class="nota warn">
+    <b>Al reportar algo</b>
+    <p>Diga el número de caso, el registro concreto (recibo, empleado, préstamo) y qué esperaba ver frente a qué vio. Con eso se reproduce; con «no funciona», no. Una captura ayuda.</p>
+  </div>
+
+  <footer>
+    <p>En pruebas: <span class="mono">account_custom</span> 18.0.3.9.0 · <span class="mono">custom_payroll</span> 18.0.1.13.0 · <span class="mono">payroll_provisions</span> 18.0.1.2.0 · <span class="mono">hr_employee_loan</span> 18.0.1.0.0. Nada de esto está en producción todavía.</p>
+  </footer>
+
+</div>

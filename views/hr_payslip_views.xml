@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_hr_payslip_form_commission" model="ir.ui.view">
+        <field name="name">hr.payslip.form.comisiones</field>
+        <field name="model">hr.payslip</field>
+        <field name="inherit_id" ref="om_hr_payroll.view_hr_payslip_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Atajo desde arriba, para quien ya sabe que quiere el desglose. -->
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_commission_detail" type="object"
+                        class="oe_stat_button" icon="fa-list-ul"
+                        invisible="commission_count == 0">
+                    <field name="commission_count" widget="statinfo"
+                           string="Comisiones"/>
+                </button>
+            </xpath>
+
+            <!-- Y en la propia fila del importe, que es donde se mira. -->
+            <xpath expr="//field[@name='line_ids']/list/field[@name='total']"
+                   position="after">
+                <field name="is_commission_line" column_invisible="1"/>
+                <button name="action_open_commission_detail" type="object"
+                        icon="fa-search-plus" title="Ver de qué facturas sale"
+                        invisible="not is_commission_line"/>
+            </xpath>
+
+        </field>
+    </record>
+
+</odoo>

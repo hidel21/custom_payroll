@@ -7,6 +7,12 @@ _logger = logging.getLogger(__name__)
 # Estados de lote de nómina que significan «esto ya se pagó y no se toca».
 LOTES_CERRADOS = ("close", "paid", "done")
 
+# Estados de **recibo** en los que su importe ya está congelado. Es una lista
+# distinta de la anterior a propósito: el recibo se confirma para cerrar el mes,
+# y el lote puede tardar días o semanas en generar los comprobantes. Entre esos
+# dos momentos es donde se colaban los cambios.
+RECIBOS_CERRADOS = ("done", "paid")
+
 
 class InvoiceCommissionLine(models.Model):
     """La cara de nómina de una comisión: cuándo y cómo se le paga al comercial.
@@ -299,6 +305,36 @@ class InvoiceCommissionLine(models.Model):
             )
 
     # ------------------------------------------------------------------
+    # Congelación al confirmar el recibo
+    # ------------------------------------------------------------------
+
+    payslip_locked = fields.Boolean(
+        string="Congelada por el recibo",
+        compute="_compute_payslip_locked",
+        store=True,
+        help="El recibo que la paga ya está confirmado, así que su importe no "
+        "se puede mover: hacerlo dejaría la nómina diciendo una cifra y la "
+        "comisión otra.\n\n"
+        "Se libera sola si el recibo vuelve a borrador o se cancela.",
+    )
+
+    @api.depends("payslip_id", "payslip_id.state")
+    def _compute_payslip_locked(self):
+        """La congelación sigue al estado del recibo, no a una marca manual.
+
+        Antes la única protección era la fecha de liquidación, que se sella al
+        generar los comprobantes del lote. Entre confirmar la hoja y generar los
+        comprobantes quedaba una ventana en la que la comisión seguía viva: el
+        recálculo podía cambiarle el importe y el recibo ya no cuadraba con las
+        facturas que decía pagar.
+
+        Se deriva del estado del recibo porque así no hay nada que acordarse de
+        pulsar, y volver el recibo a borrador libera la comisión sin más.
+        """
+        for line in self:
+            line.payslip_locked = line.payslip_id.state in RECIBOS_CERRADOS
+
+    # ------------------------------------------------------------------
     # Recogida para el recibo de nómina
     # ------------------------------------------------------------------
 
@@ -317,6 +353,27 @@ class InvoiceCommissionLine(models.Model):
         Convierte la moneda, que la regla salarial de la base no hacía: una
         comisión en dólares se sumaba como si fueran pesos.
         """
+        # Un recibo confirmado no vuelve a buscar: devuelve lo que ya tiene.
+        #
+        # Es el bloqueo que faltaba. Recursos Humanos confirma la hoja para
+        # congelar el mes, pero hasta ahora eso no impedía nada: la fecha de
+        # liquidación —la única guarda que había— se sella al generar los
+        # comprobantes del lote, que puede ser días después. En esa ventana, un
+        # recálculo volvía a pasar por aquí y la cifra se movía.
+        #
+        # Se devuelve la suma de lo enlazado en lugar de cero para que un
+        # recálculo accidental no vacíe el recibo, y no se escribe nada: si la
+        # hoja está confirmada, aquí no se toca ni un dato.
+        if payslip.state in RECIBOS_CERRADOS:
+            congeladas = self.sudo().search([("payslip_id", "=", payslip.id)])
+            _logger.info(
+                "custom_payroll: %s está confirmado; se devuelven sus %s "
+                "comisiones sin recalcular.",
+                payslip.number or payslip.id,
+                len(congeladas),
+            )
+            return congeladas._total_en_moneda_del_recibo(payslip)
+
         # Un concepto que agrupa el pago solo se liquida en sus meses de corte.
         # Con bloques de N meses contados desde enero, los cortes caen donde
         # (mes - 1) es múltiplo de N: con 3 son enero, abril, julio y octubre;
@@ -357,13 +414,19 @@ class InvoiceCommissionLine(models.Model):
 
         lines.write({"payslip_id": payslip.id})
 
-        # El importe que se paga es el ya convertido a la moneda del comercial,
-        # nunca el original de la factura. La conversión vive en la propia
-        # comisión —con su fecha y su aviso si la tasa no era de fiar—, así que
-        # aquí solo se suma.
+        return lines._total_en_moneda_del_recibo(payslip)
+
+    def _total_en_moneda_del_recibo(self, payslip):
+        """Suma estas comisiones en la moneda en la que se emite el recibo.
+
+        El importe que se paga es el ya convertido a la moneda del comercial,
+        nunca el original de la factura. La conversión vive en la propia
+        comisión —con su fecha y su aviso si la tasa no era de fiar—, así que
+        aquí solo se suma.
+        """
         moneda_recibo = payslip.company_id.currency_id
         total = 0.0
-        for line in lines:
+        for line in self:
             amount = line.commission_amount_employee or line.commission_amount
             moneda = line.employee_currency_id or line.currency_id
 

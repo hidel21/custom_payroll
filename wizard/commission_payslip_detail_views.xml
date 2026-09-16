@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_commission_payslip_detail_form" model="ir.ui.view">
+        <field name="name">commission.payslip.detail.form</field>
+        <field name="model">commission.payslip.detail</field>
+        <field name="arch" type="xml">
+            <form string="Desglose de comisiones">
+                <div class="oe_title">
+                    <h2>
+                        <field name="employee_id" readonly="1" nolabel="1"
+                               options="{'no_open': True}"/>
+                    </h2>
+                    <div class="text-muted">
+                        Del <field name="date_from" readonly="1" class="oe_inline"/>
+                        al <field name="date_to" readonly="1" class="oe_inline"/>
+                    </div>
+                </div>
+
+                <div class="alert alert-warning" role="alert"
+                     invisible="not mismatch_warning">
+                    <field name="mismatch_warning" readonly="1" nolabel="1"/>
+                </div>
+
+                <div class="alert alert-info" role="alert"
+                     invisible="not multicurrency_note">
+                    <field name="multicurrency_note" readonly="1" nolabel="1"/>
+                </div>
+
+                <field name="payslip_id" invisible="1"/>
+                <field name="currency_id" invisible="1"/>
+
+                <field name="line_ids" readonly="1" nolabel="1">
+                    <list string="Facturas" create="false" delete="false"
+                          decoration-muted="state == 'closed'">
+                        <field name="invoice_number" string="Factura"/>
+                        <field name="invoice_date" string="Fecha"/>
+                        <field name="partner_id" string="Cliente"
+                               options="{'no_open': True}"/>
+                        <field name="payment_date_invoice" string="Cobrada"/>
+                        <field name="commission_amount" string="Importe original"
+                               sum="Original"/>
+                        <field name="currency_id" string="Moneda"
+                               groups="base.group_multi_currency"/>
+                        <field name="commission_amount_employee" string="Convertido"
+                               sum="Convertido" optional="show"/>
+                        <field name="employee_currency_id" string="Moneda del pago"
+                               groups="base.group_multi_currency" optional="hide"/>
+                        <field name="conversion_warning" string="Aviso de tasa"
+                               optional="hide"/>
+                        <field name="payslip_locked" string="Congelada"
+                               widget="boolean_toggle" readonly="1"
+                               optional="hide"/>
+                        <field name="state" widget="badge" string="Estado"
+                               decoration-success="state == 'paid'"
+                               decoration-info="state == 'client_paid'"
+                               decoration-muted="state == 'closed'"/>
+                    </list>
+                </field>
+
+                <group class="oe_subtotal_footer oe_right">
+                    <field name="total_lines"/>
+                    <field name="total_payslip"/>
+                    <field name="difference"
+                           invisible="not mismatch_warning"/>
+                </group>
+
+                <footer>
+                    <button name="action_download_xlsx" type="object"
+                            string="Descargar Excel" class="btn-primary"
+                            invisible="not line_ids"/>
+                    <button name="action_download_pdf" type="object"
+                            string="Descargar PDF" class="btn-secondary"
+                            invisible="not line_ids"/>
+                    <button name="action_open_list" type="object"
+                            string="Ver la lista completa" class="btn-link"
+                            invisible="not line_ids"/>
+                    <button string="Cerrar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,372 @@
+<title>Hallazgos de nómina</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@500;600&display=swap">
+
+<style>
+  :root {
+    --paper:#ffffff; --surface:#f7f9fa; --sunk:#eef2f3;
+    --line:#d5dcdf; --line-soft:#e5eaec;
+    --ink:#14191c; --ink-soft:#495459; --ink-faint:#6f7c82;
+    --accent:#1f6b60;
+    --ok:#1f6b60; --ok-bg:#e3f0ed;
+    --warn:#92561a; --warn-bg:#f6ebdf;
+    --stop:#9c3520; --stop-bg:#f8e8e4;
+    --f-display:"IBM Plex Serif",Georgia,"Times New Roman",serif;
+    --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+    --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  }
+  body { background:var(--paper); color:var(--ink); font-family:var(--f-body);
+         font-size:15px; line-height:1.6; -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:52rem; margin:0 auto; padding:2.5rem 1.5rem 4rem;
+          display:flex; flex-direction:column; gap:2.25rem; }
+
+  .eyebrow { font-family:var(--f-mono); font-size:.7rem; letter-spacing:.14em;
+             text-transform:uppercase; color:var(--ink-faint); }
+  h1 { font-family:var(--f-display); font-weight:600; font-size:2.3rem;
+       line-height:1.12; letter-spacing:-.015em; margin:0; text-wrap:balance; }
+  .lede { font-size:1.03rem; color:var(--ink-soft); max-width:60ch; margin:0; }
+  header { display:flex; flex-direction:column; gap:.7rem;
+           border-bottom:2px solid var(--line); padding-bottom:1.3rem; }
+
+  section { display:flex; flex-direction:column; gap:.9rem; break-inside:avoid-page; }
+  h2 { font-family:var(--f-display); font-weight:600; font-size:1.3rem;
+       letter-spacing:-.01em; margin:0; padding-bottom:.4rem;
+       border-bottom:1px solid var(--line); text-wrap:balance; }
+  h3 { font-family:var(--f-body); font-weight:600; font-size:.98rem; margin:.3rem 0 0; }
+  p { margin:0; max-width:66ch; }
+  p + p { margin-top:.6rem; }
+  code,.mono { font-family:var(--f-mono); font-size:.87em; }
+  code { background:var(--sunk); border:1px solid var(--line-soft);
+         border-radius:3px; padding:.06em .32em; }
+  pre { margin:0; background:var(--sunk); border:1px solid var(--line-soft);
+        border-radius:5px; padding:.8rem 1rem; font-family:var(--f-mono);
+        font-size:.8rem; line-height:1.6; overflow-x:auto; }
+
+  .scroll { overflow-x:auto; border:1px solid var(--line); border-radius:5px; background:var(--surface); }
+  table { border-collapse:collapse; width:100%; font-size:.88rem; }
+  th { text-align:left; font-family:var(--f-mono); font-weight:500; font-size:.66rem;
+       letter-spacing:.08em; text-transform:uppercase; color:var(--ink-faint);
+       padding:.6rem .85rem; border-bottom:1px solid var(--line); white-space:nowrap; }
+  td { padding:.6rem .85rem; border-bottom:1px solid var(--line-soft); vertical-align:top; }
+  tbody tr:last-child td { border-bottom:none; }
+  td.n { font-family:var(--f-mono); font-size:.83rem; text-align:right;
+         font-variant-numeric:tabular-nums; white-space:nowrap; }
+  td.k { font-family:var(--f-mono); font-size:.8rem; white-space:nowrap; }
+
+  .nota { border-left:3px solid var(--line); background:var(--surface);
+          padding:.7rem .95rem; border-radius:0 4px 4px 0; font-size:.9rem;
+          color:var(--ink-soft); max-width:70ch; break-inside:avoid; }
+  .nota strong { color:var(--ink); }
+  .nota.stop { border-left-color:var(--stop); background:var(--stop-bg); }
+  .nota.stop strong { color:var(--stop); }
+  .nota.warn { border-left-color:var(--warn); background:var(--warn-bg); }
+  .nota.warn strong { color:var(--warn); }
+  .nota.ok { border-left-color:var(--ok); background:var(--ok-bg); }
+  .nota.ok strong { color:var(--ok); }
+
+  ul.p { margin:0; padding-left:1.1rem; display:flex; flex-direction:column; gap:.4rem; }
+  ul.p li { color:var(--ink-soft); font-size:.93rem; }
+  ul.p li strong { color:var(--ink); font-weight:600; }
+
+  footer { border-top:1px solid var(--line); padding-top:1rem;
+           font-family:var(--f-mono); font-size:.72rem; color:var(--ink-faint);
+           display:flex; flex-wrap:wrap; gap:.3rem 1.4rem; }
+
+  @media print {
+    body { font-size:10.5pt; }
+    .wrap { max-width:none; padding:0; gap:1.5rem; }
+    h1 { font-size:22pt; }
+    h2 { font-size:13pt; }
+    section { page-break-inside:avoid; }
+    pre, .scroll, .nota { page-break-inside:avoid; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">Intelli Next · Odoo 18 · 3 de septiembre de 2026</div>
+    <h1>Hallazgos de nómina</h1>
+    <p class="lede">Lo verificado sobre la base de producción durante el análisis de los
+      rechazos de la DIAN y de las diferencias reportadas en la reunión: cinco defectos
+      encontrados, dos corregidos, uno bloqueado en el proveedor y dos casos con diagnóstico
+      pendiente de confirmar contra el control manual.</p>
+  </header>
+
+  <!-- 1 -->
+  <section>
+    <h2>1 · Nómina electrónica — por qué la rechazaba la DIAN</h2>
+
+    <p>Todo empleado con auxilio de transporte era rechazado con cuatro códigos:
+      <code>ZB01</code>, <code>NIE071</code>, <code>NIE072</code> y <code>NIE073</code>.
+      La correlación era total: las cinco nóminas de abril con auxilio fallaban y las cinco
+      sin él pasaban.</p>
+
+    <h3>Dos defectos propios, ya corregidos</h3>
+    <p><strong>La etiqueta estaba renombrada.</strong> El 2 de septiembre se cambió el código
+      de <code>Transporte</code> a <code>AuxilioTransporte</code>. En el esquema de la DIAN
+      <code>Transporte</code> es el <em>elemento</em> y <code>AuxilioTransporte</code> es un
+      <em>atributo que va dentro</em>. Con el cambio se pedía un elemento inexistente.</p>
+
+    <p><strong>Y estaba mal modelada.</strong> Figuraba como nodo anidado
+      (<code>parent = Devengados</code>, <code>add_node = True</code>) cuando el Anexo Técnico
+      la define como hijo directo de <code>Devengados</code>, igual que <code>Basico</code>.
+      De las 66 etiquetas del catálogo era la única con ese patrón: los 50 hijos directos van
+      con <code>parent</code> vacío, y los anidados cuelgan de un grupo real
+      (<code>Bonificacion → Bonificaciones</code>).</p>
+
+    <div class="nota ok">
+      <strong>Resultado:</strong> corregidas las dos, desaparecieron <code>ZB01</code> y
+      <code>NIE071</code>. La DIAN ya reconoce el elemento y su valor.
+    </div>
+
+    <h3>El bloqueo que queda no es nuestro</h3>
+    <p>Quedan <code>NIE072</code> y <code>NIE073</code>, los dos viáticos. La prueba,
+      con dos documentos idénticos salvo por el valor:</p>
+
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Documento</th><th>Viáticos enviados</th><th>Resultado</th></tr></thead>
+        <tbody>
+          <tr><td class="k">NE583</td><td class="k">ViaticoManuAlojS = 1 · NS = 1</td>
+              <td><strong>Aceptado</strong></td></tr>
+          <tr><td class="k">NE584</td><td class="k">ViaticoManuAlojS = 0 · NS = 0</td>
+              <td>Rechazado — NIE072, NIE073</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>El proveedor <strong>omite del XML los atributos cuyo valor es 0</strong>, y la DIAN
+      exige que estén presentes con valor explícito. Ticket abierto con esta prueba.</p>
+  </section>
+
+  <!-- 2 -->
+  <section>
+    <h2>2 · El módulo colombiano descarta las líneas en cero</h2>
+
+    <p>Al intentar resolver lo anterior creando reglas salariales de viáticos con importe 0,
+      se descubrió que <code>hr_payroll_co</code> sobreescribe el cálculo de nómina y filtra:</p>
+
+    <pre>if amount != 0:
+    result_dict[key] = { ... }</pre>
+
+    <p>Una regla salarial de importe cero <strong>nunca puede generar línea</strong>. Las reglas
+      creadas para viáticos quedaron desactivadas por inservibles, y las líneas hubo que
+      añadirlas directamente en la nómina electrónica, que se salta ese filtro.</p>
+
+    <div class="nota warn">
+      <strong>Consecuencia de diseño:</strong> cualquier concepto que deba reportarse en cero
+      —hoy los viáticos, mañana otro— no se puede resolver con reglas salariales.
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section>
+    <h2>3 · Reconfirmar un recibo duplica su asiento contable</h2>
+
+    <p><code>om_hr_payroll_account</code> crea el asiento de nómina <strong>sin comprobar si
+      ya existe</strong>:</p>
+
+    <pre>move = self.env['account.move'].create(move_dict)
+slip.write({'move_id': move.id, 'date': date})
+move.action_post()</pre>
+
+    <p>El 2 de septiembre, al pasar el lote de abril a borrador y pulsar «Marcar como hecho»,
+      se crearon <strong>diez asientos nuevos y publicados</strong>. Los diez anteriores
+      quedaron publicados pero huérfanos: la nómina de abril estuvo contabilizada dos veces
+      durante unos veinte minutos.</p>
+
+    <div class="scroll">
+      <table>
+        <thead><tr><th></th><th>Antes</th><th>Durante</th><th>Después de revertir</th></tr></thead>
+        <tbody>
+          <tr><td>Asientos de nómina de abril</td><td class="n">15</td><td class="n">25</td><td class="n">15</td></tr>
+          <tr><td>Importe contabilizado</td><td class="n">102.718.232</td><td class="n">166.305.889</td><td class="n">102.718.232</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Se revirtió anulando los diez nuevos y reenlazando cada recibo con su asiento original.
+      Al comparar importes, nueve parejas coincidían al peso; una difería en 119 por redondeo
+      —el asiento viejo cuadraba con una línea de «Ajuste Al Peso» de 128 y el nuevo arrastraba
+      decimales—.</p>
+
+    <div class="nota stop">
+      <strong>Regla operativa:</strong> el lote de una nómina ya pagada no se pasa a borrador
+      para recalcular. Cada ciclo de «Cambiar a borrador» + «Marcar como hecho» añade otro
+      juego completo de asientos publicados.
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section>
+    <h2>4 · Diego Cruz — la línea de más en julio</h2>
+
+    <p>El recibo <code>SLIP/142</code> de julio arroja un neto de <strong>3.767.920</strong>
+      frente a los <strong>3.672.890</strong> del control manual. La diferencia es exactamente
+      <strong>95.030</strong>, y tiene nombre:</p>
+
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Comisión</th><th>Factura</th><th>Facturada</th><th>Cobrada</th><th>Liquidada</th><th>Importe</th></tr></thead>
+        <tbody>
+          <tr><td class="k">id 636</td><td class="k">FAC3594</td><td class="k">16-06-2026</td>
+              <td class="k">31-07-2026</td><td class="k">02-09-2026</td><td class="n">95.030</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>De las 17 comisiones enganchadas al recibo, dieciséis se liquidaron el 30 de julio y
+      solo esta el 2 de septiembre. No es una línea duplicada ni un fallo de suma: es una
+      comisión concreta que entró en la nómina.</p>
+
+    <div class="nota warn">
+      <strong>Pendiente de confirmar.</strong> La factura se cobró el <strong>31 de julio</strong>,
+      el último día del mes. Si el control manual se cerró antes de ese cobro, el sistema tiene
+      razón y la hoja se quedó corta. Hace falta que Recursos Humanos confirme si esa factura
+      estaba contemplada.
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section>
+    <h2>5 · Andrés Caicedo — 808.200 frente a 797.000</h2>
+
+    <p>El recibo <code>SLIP/119</code> de agosto reúne <strong>24 comisiones que suman
+      808.200</strong>, y la línea del recibo dice lo mismo. El sistema es coherente consigo
+      mismo; la diferencia de <strong>11.200</strong> es contra el control manual.</p>
+
+    <p>Se descartó la sospecha más evidente: la factura <code>FV2727</code> genera cuatro
+      comisiones para el mismo comercial, pero es correcto — una por concepto:</p>
+
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Concepto</th><th>Importe</th></tr></thead>
+        <tbody>
+          <tr><td>Licenciamiento</td><td class="n">24.705</td></tr>
+          <tr><td>Soporte</td><td class="n">24.000</td></tr>
+          <tr><td>Instalación</td><td class="n">13.500</td></tr>
+          <tr><td>Hardware</td><td class="n">9.366</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Esa misma factura reparte comisión a ocho comerciales, y el desglose por concepto es el
+      comportamiento diseñado.</p>
+
+    <div class="nota warn">
+      <strong>Un cambio reciente que descuadra las comparaciones.</strong> La comisión de
+      <strong>250.000</strong> de <code>FAC3602</code> entra ahora porque la tarifa
+      <em>Horas Desarrollo</em> pasó de <strong>trimestral a inmediata</strong>. Con la
+      periodicidad anterior esa comisión esperaba a octubre. Cualquier control manual anterior
+      al cambio arrastra ese desfase.
+    </div>
+
+    <p>Para cuadrar los 11.200 hace falta el detalle del control manual: con las 24 líneas
+      delante es inmediato señalar cuál no figura.</p>
+  </section>
+
+  <!-- 6 -->
+  <section>
+    <h2>6 · La suma algebraica — no reproducida</h2>
+
+    <p>Se planteó que el sistema no resta los negativos. En el recibo revisado las deducciones
+      sí van en negativo y el neto cuadra:</p>
+
+    <pre>BRUTO             4.079.920
+TOTDEDUCCIONES     -312.000
+NETO              3.767.920</pre>
+
+    <p>No se observa el síntoma en los datos actuales. Para investigarlo hace falta
+      <strong>el caso concreto</strong> mencionado en la reunión —la prima con el ajuste de
+      −1.500 de hace quince días—, porque sin él no hay nada que reproducir.</p>
+  </section>
+
+  <!-- 7 -->
+  <section>
+    <h2>7 · Prestaciones sociales — el circuito está listo</h2>
+
+    <p>El traslado de la cuenta 26 a la 25 es automatizable, y los datos acompañan: todas las
+      cuentas concilian y <strong>todos los apuntes llevan el empleado como tercero</strong>,
+      que es lo que permite liquidar persona a persona.</p>
+
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Cuenta</th><th>Concepto</th><th>Concilia</th><th>Apuntes con tercero</th><th>Saldo</th></tr></thead>
+        <tbody>
+          <tr><td class="k">26102001</td><td>Prima de servicios</td><td>✓</td><td class="n">82 / 82</td><td class="n">26.072.287</td></tr>
+          <tr><td class="k">26101501</td><td>Vacaciones</td><td>✓</td><td class="n">83 / 83</td><td class="n">10.963.792</td></tr>
+          <tr><td class="k">26100501</td><td>Cesantías</td><td>✓</td><td class="n">89 / 89</td><td class="n">3.527.956</td></tr>
+          <tr><td class="k">26101001</td><td>Intereses cesantías</td><td>✓</td><td class="n">89 / 89</td><td class="n">3.128.676</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>La cuenta <code>25150101</code> (Intereses Consolidados) ya tiene activada la
+      conciliación. Queda un matiz menor: es de tipo <code>liability_current</code> mientras
+      las otras seis son <code>liability_payable</code>, así que no aparecerá junto a ellas en
+      los informes de saldos por tercero.</p>
+
+    <h3>Dos precisiones sobre el alcance</h3>
+    <ul class="p">
+      <li><strong>Solo Intelli Next S.A.S tiene provisiones.</strong> Las otras seis compañías
+        no tienen ni un apunte en esas cuentas, lo cual es coherente: las prestaciones sociales
+        son figura colombiana. El desarrollo no debe atarse a una compañía, pero no habrá nada
+        que trasladar en las demás.</li>
+      <li><strong>Hay movimientos desde enero de 2022</strong>, en 92 fechas distintas y por
+        vías ajenas al diario de nómina. El acumulado real es mayor que lo que se ve mirando
+        solo los asientos de nómina.</li>
+    </ul>
+
+    <h3>Calendario acordado</h3>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Prestación</th><th>Corte</th><th>Pago</th></tr></thead>
+        <tbody>
+          <tr><td>Prima de servicios</td><td>30 junio y 31 diciembre</td><td>junio y diciembre</td></tr>
+          <tr><td>Intereses de cesantías</td><td>31 diciembre</td><td>enero</td></tr>
+          <tr><td>Cesantías</td><td>31 diciembre</td><td>febrero, al fondo</td></tr>
+          <tr><td>Vacaciones</td><td>31 diciembre</td><td>año siguiente</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>El diseño acordado: el sistema propone el acumulado del periodo, permite corregirlo,
+      genera el asiento 26 → 25, concilia los apuntes para dejar el saldo del empleado en cero
+      y manda cualquier diferencia contra la cuenta de gasto. Restringido al grupo
+      <em>Contabilidad / Administrador</em>.</p>
+
+    <div class="nota stop">
+      <strong>Condición de diseño.</strong> Por lo del punto 3, la automatización debe generar
+      su propio asiento y <strong>no apoyarse en recalcular ni reconfirmar recibos</strong>.
+    </div>
+  </section>
+
+  <!-- 8 -->
+  <section>
+    <h2>8 · Qué hace falta para cerrar</h2>
+    <ul class="p">
+      <li><strong>SOEFITEC</strong> — que escriba los atributos con valor 0 en lugar de
+        omitirlos. Es lo único que bloquea el reporte de abril, pendiente desde el 1 de
+        septiembre y con plazo de extemporaneidad corriendo.</li>
+      <li><strong>Recursos Humanos</strong> — confirmar si la factura FAC3594, cobrada el 31 de
+        julio, estaba en el control manual de Diego Cruz.</li>
+      <li><strong>Recursos Humanos</strong> — el detalle del control de Andrés Caicedo, para
+        señalar cuál de las 24 comisiones no figura.</li>
+      <li><strong>El caso de la suma algebraica</strong> — la nómina concreta con el ajuste de
+        −1.500 mencionada en la reunión.</li>
+      <li><strong>Dos notas de ajuste</strong> — los documentos NE583 y NE586 quedaron
+        aceptados por la DIAN con datos incorrectos durante las pruebas y hay que
+        corregirlos.</li>
+      <li><strong>Consecutivos NE553 a NE586</strong> — consumidos en las pruebas de reenvío.
+        Conviene documentar el rango por si la DIAN pregunta por los huecos.</li>
+    </ul>
+  </section>
+
+  <footer>
+    <span>Intelli Next S.A.S · MyIntelli</span>
+    <span>Verificado sobre la base de producción</span>
+    <span>Hidelberg Martinez · 3 de septiembre de 2026</span>
+  </footer>
+
+</div>
