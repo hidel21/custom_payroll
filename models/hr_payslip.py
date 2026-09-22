@@ -1,6 +1,7 @@
 import logging
 
 from odoo import _, api, fields, models
+from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
 
@@ -163,6 +164,45 @@ class HrPayslip(models.Model):
         if soltar:
             soltar._unsettle_commission_lines()
         return res
+
+    # ------------------------------------------------------------------
+    # Un recibo confirmado no se recalcula
+    # ------------------------------------------------------------------
+
+    def compute_sheet(self):
+        """Se niega a recalcular un recibo ya confirmado.
+
+        ``compute_sheet`` borra todas las líneas y las vuelve a generar desde
+        las reglas. En un recibo cerrado eso no es «actualizar»: es perder los
+        ajustes que alguien decidió a mano.
+
+        Lo que se pierde no es teórico. En una sola semana, cuatro recibos de
+        agosto quedaron descuadrados así: a Andrés se le borró una bonificación
+        de 2.100,15 y su neto bajó de 3.990.626 a 3.988.526; a Óscar se le
+        fundieron las líneas y arrastró comisiones que ya estaban fuera del
+        recibo. Cada vez hubo que revertir el asiento, rehacer el recibo y
+        regenerar el documento electrónico.
+
+        Se acordó verbalmente no pulsar el botón. Un acuerdo verbal no aguanta
+        —se incumplió dos veces el mismo día—, así que aquí queda escrito.
+
+        Para recalcular de verdad hay que devolver el recibo a borrador, que es
+        un gesto deliberado y reversible, y deja rastro en el historial.
+        """
+        cerrados = self.filtered(lambda r: r.state in ESTADOS_LIQUIDADOS)
+        if cerrados and not self.env.context.get("recalcular_confirmados"):
+            raise UserError(
+                _(
+                    "No se puede recalcular %(recibos)s: está confirmado y "
+                    "recalcularlo borraría los ajustes hechos a mano "
+                    "—bonificaciones, entradas manuales y comisiones "
+                    "apartadas—.\n\nSi de verdad hace falta rehacerlo, "
+                    "devuélvalo antes a borrador. Así el cambio es deliberado "
+                    "y queda constancia de quién lo hizo.",
+                    recibos=", ".join(cerrados.mapped("number") or ["el recibo"]),
+                )
+            )
+        return super().compute_sheet()
 
     def action_view_commission_detail(self):
         """Abre el desglose en una ventana emergente sobre el recibo."""

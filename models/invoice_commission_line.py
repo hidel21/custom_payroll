@@ -81,6 +81,29 @@ class InvoiceCommissionLine(models.Model):
         "porque no hay ninguna tasa de cambio registrada para esa fecha.",
     )
 
+    def _valores_congelados(self):
+        """Lo que hay guardado en las comisiones ya liquidadas.
+
+        Se lee por SQL a propósito: leer el campo dentro de su propio ``compute``
+        lo dispararía otra vez.
+        """
+        liquidadas = self.filtered(
+            lambda l: l.settlement_date and isinstance(l.id, int)
+        )
+        if not liquidadas:
+            return {}
+        self.env.cr.execute(
+            """
+            SELECT id, commission_amount_employee, conversion_date,
+                   conversion_warning
+              FROM invoice_commission_line
+             WHERE id IN %s
+               AND commission_amount_employee IS NOT NULL
+            """,
+            (tuple(liquidadas.ids),),
+        )
+        return {fila[0]: fila[1:] for fila in self.env.cr.fetchall()}
+
     @api.depends(
         "commission_amount",
         "currency_id",
@@ -88,6 +111,7 @@ class InvoiceCommissionLine(models.Model):
         "invoice_date",
         "payment_date_invoice",
         "company_id",
+        "settlement_date",
     )
     def _compute_commission_amount_employee(self):
         """Pasa la comisión a la moneda en que cobra el comercial.
@@ -103,13 +127,34 @@ class InvoiceCommissionLine(models.Model):
         * **Sin tasa no hay conversión fiable.** Odoo, cuando no encuentra
           ninguna, aplica 1:1 en silencio y el importe resultante parece
           correcto. Aquí eso se detecta y se marca para que alguien lo revise.
+
+        Y una cuarta, que costó un mes descubrir: **la tasa se busca en la
+        tabla de la compañía que paga al comercial, no en la de la factura**.
+        Parece lo mismo y no lo es. Intelli Next C.A factura en bolívares
+        porque el bolívar *es* su moneda funcional, así que en su tabla no hay
+        ninguna tasa de VES que consultar: no le hace falta. Preguntarle a ella
+        cuánto vale un bolívar en pesos devuelve 1:1, y comisiones de 970
+        bolívares se pagaban como 970 pesos.
+
+        Lo ya liquidado no se recalcula. Corregir la fórmula no puede mover el
+        importe de una comisión que ya se pagó: se devuelve lo que se guardó el
+        día que se liquidó, igual que un recibo confirmado devuelve sus
+        comisiones congeladas.
         """
         criterio = (
             self.env["ir.config_parameter"]
             .sudo()
             .get_param("custom_payroll.commission_conversion_basis", "invoice")
         )
+        congelados = self._valores_congelados()
         for line in self:
+            if line.id in congelados:
+                importe, fecha_tasa, aviso = congelados[line.id]
+                line.commission_amount_employee = importe
+                line.conversion_date = fecha_tasa
+                line.conversion_warning = aviso
+                continue
+
             destino = line.employee_currency_id
             origen = line.currency_id
 
@@ -135,10 +180,18 @@ class InvoiceCommissionLine(models.Model):
                 )
                 continue
 
+            # La compañía que paga, no la que factura: es la que tiene cargadas
+            # las tasas de la moneda de origen. Ver el docstring.
+            pagadora = (
+                line.employee_id.company_id
+                or line.payslip_id.company_id
+                or line.company_id
+                or self.env.company
+            )
             convertido = origen._convert(
                 line.commission_amount,
                 destino,
-                line.company_id or self.env.company,
+                pagadora,
                 fecha,
             )
             line.commission_amount_employee = convertido
