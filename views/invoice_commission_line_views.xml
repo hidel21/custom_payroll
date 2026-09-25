@@ -16,13 +16,6 @@
         <field name="arch" type="xml">
             <field name="payment_date_invoice" position="after">
                 <field name="settlement_date" optional="show" />
-                <!-- Las dos puntas de la conversión, siempre juntas: sin el
-                     código de moneda al lado, dos cifras distintas en la misma
-                     fila no significan nada. -->
-                <field name="currency_id" optional="show" string="Moneda venta" />
-                <field name="employee_currency_id" optional="show" string="Moneda pago" />
-                <field name="commission_amount_employee" optional="show"
-                    sum="Total a pagar" />
                 <field name="conversion_date" optional="hide" />
                 <field name="conversion_warning" optional="hide" />
                 <!-- Ocultas por defecto: solo interesan cuando hay que auditar
@@ -30,6 +23,21 @@
                 <field name="state_change_uid" optional="hide" />
                 <field name="state_change_date" optional="hide" />
                 <field name="state_change_reason" optional="hide" />
+            </field>
+
+            <!-- La comisión convertida va pegada al importe original, justo
+                 antes del estado. Antes caía después de la fecha de cobro, con
+                 la moneda de la **factura** como columna siguiente: una cifra
+                 en dólares con un «COP» al lado se lee como pesos, y así se
+                 leyó. Aquí cada importe queda junto a su moneda.
+
+                 No se añade otra columna de moneda de venta: la vista base ya
+                 trae `currency_id` delante del importe original. -->
+            <field name="commission_amount" position="after">
+                <field name="employee_currency_id" optional="show"
+                    string="Moneda pago" />
+                <field name="commission_amount_employee" optional="show"
+                    string="Comisión a pagar" sum="Total a pagar" />
             </field>
         </field>
     </record>
