@@ -27,6 +27,13 @@ COLUMNAS = [
     ('% Efectivo', 'effective', 11),
     ('Porcentajes', 'percentages', 30),
     ('Monto Comisión', 'amount', 16),
+    # La comisión ya convertida a la moneda en que cobra el comercial, con su
+    # código de moneda delante. Va pegada al importe original y antes del
+    # estado, igual que en pantalla: sin la moneda al lado, dos cifras
+    # distintas en la misma fila no significan nada, y una comisión en dólares
+    # junto a un «COP» se lee como pesos.
+    ('Moneda pago', 'employee_currency', 12),
+    ('Comisión a pagar', 'amount_employee', 16),
     ('Estado', 'state', 14),
 ]
 
@@ -110,6 +117,8 @@ class CommissionReportXlsx(models.AbstractModel):
                 'effective': line.effective_percentage or 0.0,
                 'percentages': line.percentage_summary or '',
                 'amount': line.commission_amount or 0.0,
+                'employee_currency': line.employee_currency_id.name or '',
+                'amount_employee': line.commission_amount_employee or 0.0,
                 'state': etiquetas.get(line.state, line.state),
             }
             for indice, (_n, clave, _a) in enumerate(COLUMNAS):
@@ -119,7 +128,7 @@ class CommissionReportXlsx(models.AbstractModel):
                         hoja.write_datetime(fila, indice, valor, fecha)
                     else:
                         hoja.write(fila, indice, '', fecha)
-                elif clave in ('base', 'amount'):
+                elif clave in ('base', 'amount', 'amount_employee'):
                     hoja.write_number(fila, indice, valor, dinero)
                 elif clave == 'effective':
                     hoja.write_number(fila, indice, valor, porcentaje)
@@ -138,6 +147,16 @@ class CommissionReportXlsx(models.AbstractModel):
                           sum(lines.mapped('commission_base')), total)
         hoja.write_number(fila, indices['amount'],
                           sum(lines.mapped('commission_amount')), total)
+        # La comisión a pagar se suma aparte porque está en otra moneda. Si el
+        # listado mezcla varias, la suma no significa nada y es mejor no
+        # escribirla que escribir un número que nadie puede usar.
+        monedas = lines.mapped('employee_currency_id')
+        if len(monedas) == 1:
+            hoja.write_number(fila, indices['amount_employee'],
+                              sum(lines.mapped('commission_amount_employee')), total)
+        elif monedas:
+            hoja.write(fila, indices['amount_employee'],
+                       'varias monedas', total_texto)
 
         libro.close()
         return flujo.getvalue(), 'xlsx'
