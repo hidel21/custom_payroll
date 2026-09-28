@@ -321,15 +321,22 @@ class InvoiceCommissionLine(models.Model):
         * hay fecha de pago del cliente → **Por Liquidar**
         * no hay ninguna de las dos → **Por Cobrar**
 
-        Los estados que no dependen de fechas —Borrador, Fuera de Corte y En
-        Mora— no se tocan: el primero es anterior al cálculo y los otros dos se
-        marcan a mano.
+        Borrador y En Mora no se tocan: el primero es anterior al cálculo y el
+        segundo se marca a mano.
+
+        Fuera de Corte tampoco, **mientras siga sin liquidar**. Pero en cuanto
+        se paga deja de tener sentido: una comisión que ya cobró el comercial
+        está Liquidada, venga de donde venga. Sin esto se quedaba diciendo
+        «Fuera de Corte» para siempre, incluso enlazada a un recibo pagado, y
+        no había forma de distinguir lo que faltaba por pagar de lo ya pagado.
         """
         contexto = {"sin_sincronizar_estado": True}
         destino = {}
 
         for line in self:
-            if line.state in ("draft", "out_of_cycle", "overdue"):
+            if line.state in ("draft", "overdue"):
+                continue
+            if line.state == "out_of_cycle" and not line.settlement_date:
                 continue
             if line.settlement_date:
                 cerrado = line.payslip_id.payslip_run_id.state in LOTES_CERRADOS
@@ -448,12 +455,23 @@ class InvoiceCommissionLine(models.Model):
             dominio_periodicidad
             + [
                 ("employee_id", "=", employee.id),
-                # Dos estados quedan fuera del recibo, por motivos distintos:
-                # Borrador es una comisión que todavía no está bien calculada
-                # —le falta la analítica, o nadie ha pulsado Compute—, y Fuera
-                # de Corte es una que sí está bien pero que Recursos Humanos ha
-                # decidido dejar para más adelante.
-                ("state", "not in", ("draft", "out_of_cycle")),
+                # Solo Borrador queda fuera: es una comisión que todavía no
+                # está bien calculada, porque le falta la analítica o nadie ha
+                # pulsado Compute.
+                #
+                # Fuera de Corte **sí entra**, y esto antes no era así. Ese
+                # estado no significa «apartada»: significa que el cliente pagó
+                # tarde —una factura de abril cobrada en septiembre— y que la
+                # comisión toca en el mes del cobro, no en el de la factura.
+                # Excluirla la dejaba esperando indefinidamente: de las cuatro
+                # de MERCADO ZAPATOCA de agosto, ninguna volvió sola; las
+                # rescató Recursos Humanos a mano el 26 de septiembre. El aviso
+                # salía y el dinero no.
+                #
+                # Las demás condiciones ya la sitúan en su sitio: tiene que
+                # estar cobrada y sin liquidar, y el cobro tiene que caer dentro
+                # del periodo del recibo.
+                ("state", "!=", "draft"),
                 ("settlement_date", "=", False),
                 ("payment_date_invoice", "!=", False),
                 ("payment_date_invoice", "<=", payslip.date_to),
@@ -511,9 +529,10 @@ class InvoiceCommissionLine(models.Model):
         botón de generar comprobantes, o cambios de fórmula que Odoo no
         recalcula por sí solo en campos almacenados.
         """
-        lines = self.sudo().search(
-            [("state", "not in", ("draft", "out_of_cycle", "overdue"))]
-        )
+        # Las de Fuera de Corte entran también: si alguna ya se liquidó, hay
+        # que ponerle el estado que le toca. _sync_payroll_state deja en paz
+        # las que sigan sin pagar, así que no hace falta filtrarlas aquí.
+        lines = self.sudo().search([("state", "not in", ("draft", "overdue"))])
         lines._sync_payroll_state()
 
         self.env.add_to_compute(self._fields["ready_to_pay"], lines)
