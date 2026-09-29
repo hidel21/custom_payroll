@@ -25,7 +25,8 @@ class CommissionMaintenanceWizard(models.TransientModel):
                 "de nómina se cerró en Cerrada.\n\nHace falta después de "
                 "instalar o de corregir fechas a mano, porque el estado de las "
                 "comisiones que ya existían no se recalcula solo. No toca las "
-                "que están en Borrador, Fuera de Corte ni En Mora.",
+                "que están en Borrador ni En Mora, ni las que tienen el pago "
+                "autorizado sin cobro.",
             }
         )
         return tareas

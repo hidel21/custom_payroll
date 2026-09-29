@@ -29,7 +29,7 @@ liquidado.
 
 ```
 Borrador → Por Cobrar → Por Liquidar → Liquidada → Cerrada
-                     y aparte: Fuera de Corte · En Mora
+                                     y aparte: En Mora
 ```
 
 | Estado | Lo que lo provoca |
@@ -39,12 +39,28 @@ Borrador → Por Cobrar → Por Liquidar → Liquidada → Cerrada
 | `client_paid` **Por Liquidar** | Hay fecha de pago: pagó el cliente, falta pagarle al comercial |
 | `paid` **Liquidada** | Hay fecha de liquidación: se le pagó al comercial |
 | `closed` **Cerrada** | Además, el lote de nómina está cerrado |
-| `out_of_cycle` **Fuera de Corte** | Cobró tras el cierre; se liquida en la siguiente |
 | `overdue` **En Mora** | El cliente lleva meses sin pagar |
 
-Los cuatro primeros se deducen de las fechas y del estado del lote. Los dos
-últimos se marcan a mano. Ninguno se teclea a dedo, de modo que dos personas no
-puedan interpretarlo distinto.
+Los cinco primeros se deducen de las fechas y del estado del lote; En Mora se
+marca a mano. Ninguno se teclea a dedo, de modo que dos personas no puedan
+interpretarlo distinto.
+
+**Fuera de Corte** se retiró el 29-09-2026. Nunca sumó la comisión al
+comercial: era un aviso de color que obligaba a devolverla a mano a Por
+Liquidar para poder pagarla. Lo que pretendía resolver —una factura de abril
+que el cliente paga en septiembre— lo hace ya el circuito normal, porque la
+comisión entra en la nómina del mes del cobro.
+
+### Liquidada sin que el cliente haya pagado
+
+Marcar una comisión como **Liquidada** a mano, sin fecha de liquidación, ya no
+se deshace: enciende la marca *Liquidación autorizada* y la comisión entra en
+la nómina del comercial aunque la factura siga sin cobrar. Es lo que ocurre
+cuando se autoriza un pago por adelantado —a Génesis se lo autorizó Gerardo—,
+y antes obligaba a cruzar pagos provisionales a mano.
+
+La autorización se apaga sola en cuanto la comisión se liquida de verdad, y se
+revoca desde **⇄ Cambiar de estado → Devolver al estado anterior**.
 
 ## Qué aporta
 

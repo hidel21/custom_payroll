@@ -16,6 +16,11 @@
         <field name="arch" type="xml">
             <field name="payment_date_invoice" position="after">
                 <field name="settlement_date" optional="show" />
+                <!-- Se ve de un vistazo qué se está pagando por adelantado:
+                     son las que no tienen fecha de cobro y aun así entran en
+                     la nómina. -->
+                <field name="settlement_authorized" optional="show"
+                    widget="boolean_toggle" string="Pago autorizado" />
                 <field name="conversion_date" optional="hide" />
                 <field name="conversion_warning" optional="hide" />
                 <!-- Ocultas por defecto: solo interesan cuando hay que auditar
@@ -50,6 +55,8 @@
         <field name="arch" type="xml">
             <field name="payment_date_invoice" position="after">
                 <field name="settlement_date" readonly="1" />
+                <field name="settlement_authorized" readonly="1"
+                    invisible="not settlement_authorized" />
                 <field name="state_change_uid" readonly="1"
                     invisible="not state_change_uid" />
                 <field name="state_change_date" readonly="1"
@@ -78,10 +85,14 @@
             <xpath expr="//filter[@name='filter_payment_date']" position="before">
                 <separator />
                 <filter name="filter_por_liquidar" string="Pendientes de liquidar"
-                    domain="[('payment_date_invoice', '!=', False),
-                                 ('settlement_date', '=', False)]" />
+                    domain="['&amp;', ('settlement_date', '=', False),
+                                 '|', ('payment_date_invoice', '!=', False),
+                                      ('settlement_authorized', '=', True)]" />
                 <filter name="filter_liquidadas" string="Ya liquidadas"
                     domain="[('settlement_date', '!=', False)]" />
+                <filter name="filter_autorizadas" string="Pago autorizado sin cobro"
+                    domain="[('settlement_authorized', '=', True),
+                                 ('settlement_date', '=', False)]" />
                 <filter name="filter_conversion" string="Conversión a revisar"
                     domain="[('conversion_warning', '!=', False)]" />
                                 <filter name="filter_sin_importe" string="Calculadas en cero"

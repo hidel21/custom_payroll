@@ -259,6 +259,21 @@ class InvoiceCommissionLine(models.Model):
         return len(lines)
 
     # ------------------------------------------------------------------
+    # Liquidación autorizada antes del cobro
+    # ------------------------------------------------------------------
+
+    settlement_authorized = fields.Boolean(
+        string="Liquidación autorizada",
+        copy=False,
+        index=True,
+        help="La comisión se paga en nómina aunque el cliente todavía no haya "
+        "pagado la factura.\n\n"
+        "Se enciende sola al marcar la comisión como Liquidada a mano. Se "
+        "apaga cuando la comisión se liquida de verdad, o al devolverla a "
+        "cualquier otro estado.",
+    )
+
+    # ------------------------------------------------------------------
     # Quién corrigió el estado a mano
     # ------------------------------------------------------------------
     # El estado se deduce de las fechas, así que tocarlo a mano es siempre una
@@ -300,8 +315,44 @@ class InvoiceCommissionLine(models.Model):
     # ------------------------------------------------------------------
 
     def write(self, vals):
+        """Marcar a mano como Liquidada autoriza el pago sin esperar el cobro.
+
+        Es el gesto que ya hacía Recursos Humanos, solo que hasta ahora no
+        servía de nada: el estado se deduce de las fechas, así que volvía a
+        «Por Cobrar» en la siguiente sincronización y la comisión no entraba en
+        la nómina. Había que cruzar pagos provisionales a mano —le pasó a
+        Génesis el mes pasado, con el pago autorizado por Gerardo—.
+
+        Se guarda como una marca aparte y no como un estado más porque no es un
+        punto del recorrido: es un permiso. La comisión sigue su camino normal
+        y, cuando el cliente pague, todo encaja sin deshacer nada.
+        """
+        automatico = self.env.context.get("sin_sincronizar_estado")
+        autorizar = self.browse()
+        retirar = self.browse()
+        if not automatico and "state" in vals:
+            if vals["state"] == "paid" and not vals.get("settlement_date"):
+                autorizar = self.filtered(lambda l: not l.settlement_date)
+            elif vals["state"] != "paid":
+                retirar = self.filtered("settlement_authorized")
+        if vals.get("settlement_date"):
+            # Ya está liquidada de verdad: el permiso deja de hacer falta.
+            retirar |= self.filtered("settlement_authorized")
+
         res = super().write(vals)
-        if not self.env.context.get("sin_sincronizar_estado") and (
+
+        if autorizar:
+            autorizar.write({"settlement_authorized": True})
+            _logger.info(
+                "custom_payroll: %s comisión(es) autorizadas a liquidar sin "
+                "cobro por %s.",
+                len(autorizar),
+                self.env.user.login,
+            )
+        if retirar - autorizar:
+            (retirar - autorizar).write({"settlement_authorized": False})
+
+        if not automatico and (
             "settlement_date" in vals
             or "payment_date_invoice" in vals
             or "payslip_id" in vals
@@ -324,11 +375,10 @@ class InvoiceCommissionLine(models.Model):
         Borrador y En Mora no se tocan: el primero es anterior al cálculo y el
         segundo se marca a mano.
 
-        Fuera de Corte tampoco, **mientras siga sin liquidar**. Pero en cuanto
-        se paga deja de tener sentido: una comisión que ya cobró el comercial
-        está Liquidada, venga de donde venga. Sin esto se quedaba diciendo
-        «Fuera de Corte» para siempre, incluso enlazada a un recibo pagado, y
-        no había forma de distinguir lo que faltaba por pagar de lo ya pagado.
+        Las autorizadas tampoco, mientras sigan sin liquidar: alguien decidió
+        pagarlas antes del cobro y devolverlas a «Por Cobrar» desharía esa
+        decisión cada noche. En cuanto se liquiden de verdad vuelven al cauce
+        normal, porque la autorización se apaga sola al sellar la fecha.
         """
         contexto = {"sin_sincronizar_estado": True}
         destino = {}
@@ -336,7 +386,7 @@ class InvoiceCommissionLine(models.Model):
         for line in self:
             if line.state in ("draft", "overdue"):
                 continue
-            if line.state == "out_of_cycle" and not line.settlement_date:
+            if line.settlement_authorized and not line.settlement_date:
                 continue
             if line.settlement_date:
                 cerrado = line.payslip_id.payslip_run_id.state in LOTES_CERRADOS
@@ -351,17 +401,19 @@ class InvoiceCommissionLine(models.Model):
         for estado, lineas in destino.items():
             lineas.with_context(**contexto).write({"state": estado})
 
-    @api.depends("payment_date_invoice", "settlement_date")
+    @api.depends("payment_date_invoice", "settlement_date", "settlement_authorized")
     def _compute_ready_to_pay(self):
-        """Lista para pagar es lo cobrado al cliente y aún sin liquidar.
+        """Lista para pagar es lo que puede entrar ya en una nómina.
 
         El módulo original lo definía como «calculada y cobrada», atado a un
-        estado. Atarlo a las dos fechas lo hace independiente de por dónde haya
-        pasado el estado.
+        estado. Atarlo a los hechos lo hace independiente de por dónde haya
+        pasado el estado: cobrada al cliente —o autorizada a pagar sin esperar
+        el cobro— y todavía sin liquidar al comercial.
         """
         for record in self:
             record.ready_to_pay = bool(
-                record.payment_date_invoice and not record.settlement_date
+                (record.payment_date_invoice or record.settlement_authorized)
+                and not record.settlement_date
             )
 
     # ------------------------------------------------------------------
@@ -458,21 +510,21 @@ class InvoiceCommissionLine(models.Model):
                 # Solo Borrador queda fuera: es una comisión que todavía no
                 # está bien calculada, porque le falta la analítica o nadie ha
                 # pulsado Compute.
-                #
-                # Fuera de Corte **sí entra**, y esto antes no era así. Ese
-                # estado no significa «apartada»: significa que el cliente pagó
-                # tarde —una factura de abril cobrada en septiembre— y que la
-                # comisión toca en el mes del cobro, no en el de la factura.
-                # Excluirla la dejaba esperando indefinidamente: de las cuatro
-                # de MERCADO ZAPATOCA de agosto, ninguna volvió sola; las
-                # rescató Recursos Humanos a mano el 26 de septiembre. El aviso
-                # salía y el dinero no.
-                #
-                # Las demás condiciones ya la sitúan en su sitio: tiene que
-                # estar cobrada y sin liquidar, y el cobro tiene que caer dentro
-                # del periodo del recibo.
                 ("state", "!=", "draft"),
                 ("settlement_date", "=", False),
+                # Dos vías para entrar, y basta con una:
+                #
+                # * El cliente pagó dentro del periodo del recibo. Es el caso
+                #   normal, y también el de la factura de abril cobrada en
+                #   septiembre: entra en la nómina del mes del cobro, no en la
+                #   del mes de la factura.
+                # * Alguien autorizó pagarla sin esperar el cobro. Ocurre y se
+                #   decide arriba —a Génesis se lo autorizó Gerardo—, así que
+                #   el sistema tiene que saber recogerlo en lugar de obligar a
+                #   cruzar pagos provisionales a mano.
+                "|",
+                ("settlement_authorized", "=", True),
+                "&",
                 ("payment_date_invoice", "!=", False),
                 ("payment_date_invoice", "<=", payslip.date_to),
                 "|",
@@ -529,9 +581,9 @@ class InvoiceCommissionLine(models.Model):
         botón de generar comprobantes, o cambios de fórmula que Odoo no
         recalcula por sí solo en campos almacenados.
         """
-        # Las de Fuera de Corte entran también: si alguna ya se liquidó, hay
-        # que ponerle el estado que le toca. _sync_payroll_state deja en paz
-        # las que sigan sin pagar, así que no hace falta filtrarlas aquí.
+        # Las autorizadas entran también: si alguna ya se liquidó, hay que
+        # ponerle el estado que le toca. _sync_payroll_state deja en paz las
+        # que sigan sin liquidar, así que no hace falta filtrarlas aquí.
         lines = self.sudo().search([("state", "not in", ("draft", "overdue"))])
         lines._sync_payroll_state()
 

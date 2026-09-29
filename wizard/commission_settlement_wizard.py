@@ -64,8 +64,17 @@ class CommissionSettlementWizard(models.TransientModel):
         string='En lotes ya cerrados',
         compute='_compute_resumen')
 
-    postponed_count = fields.Integer(
-        string='Ya pospuestas',
+    authorized_count = fields.Integer(
+        string='Autorizadas sin cobro',
+        compute='_compute_resumen')
+
+    authorizable_count = fields.Integer(
+        string='Se pueden autorizar',
+        compute='_compute_resumen')
+
+    authorizable_amount = fields.Monetary(
+        string='Importe que se autoriza',
+        currency_field='currency_id',
         compute='_compute_resumen')
 
     total_amount = fields.Monetary(
@@ -122,11 +131,22 @@ class CommissionSettlementWizard(models.TransientModel):
                 wizard.line_ids[:1].currency_id or self.env.company.currency_id)
             wizard.total_amount = sum(pendientes.mapped('commission_amount'))
             wizard.revert_amount = sum(liquidadas.mapped('commission_amount'))
-            # Se cuentan las apartadas para poder traerlas de vuelta: la
-            # función de posponer se retiró, pero puede quedar alguna marcada
-            # de antes y sin esto no habría forma de recuperarla.
-            wizard.postponed_count = len(
-                wizard.line_ids.filtered(lambda l: l.state == 'out_of_cycle'))
+            # Las autorizadas a pagar sin cobro se cuentan aparte: son las
+            # que se pueden revocar aunque no tengan fecha de liquidación.
+            wizard.authorized_count = len(
+                wizard.line_ids.filtered(
+                    lambda l: l.settlement_authorized and not l.settlement_date))
+            # Autorizar sirve para lo que aún no está cobrado: si el cliente ya
+            # pagó, la comisión entra sola y no hay nada que autorizar.
+            autorizables = wizard.line_ids.filtered(
+                lambda l: (
+                    not l.settlement_date
+                    and not l.settlement_authorized
+                    and not l.payment_date_invoice
+                    and l.state != 'draft'))
+            wizard.authorizable_count = len(autorizables)
+            wizard.authorizable_amount = sum(
+                autorizables.mapped('commission_amount'))
 
     # ------------------------------------------------------------------
     # Marcar como liquidada
@@ -150,6 +170,53 @@ class CommissionSettlementWizard(models.TransientModel):
             "%s por %s (importe %s).",
             len(pendientes), self.settlement_date, self.env.user.login,
             sum(pendientes.mapped('commission_amount')))
+        return {'type': 'ir.actions.act_window_close'}
+
+    # ------------------------------------------------------------------
+    # Autorizar el pago sin esperar el cobro
+    # ------------------------------------------------------------------
+
+    def action_authorize(self):
+        """Mete la comisión en la nómina aunque el cliente no haya pagado.
+
+        Lo pidió Yeny el 29-09-2026 y ocurre de verdad: a veces se autoriza el
+        pago de una comisión antes del recaudo —a Génesis el mes pasado, por
+        autorización de Gerardo— y hasta ahora eso obligaba a cruzar pagos
+        provisionales a mano para que la nómina la recogiera.
+
+        Es una decisión de dinero, así que se firma: el motivo es obligatorio y
+        queda con el nombre de quien lo autoriza. Cuando el cliente pague, la
+        comisión sigue su curso normal sin deshacer nada.
+        """
+        self.ensure_one()
+        autorizables = self.line_ids.filtered(
+            lambda l: (
+                not l.settlement_date
+                and not l.settlement_authorized
+                and not l.payment_date_invoice
+                and l.state != 'draft'))
+        if not autorizables:
+            raise UserError(
+                "No hay nada que autorizar: las seleccionadas o ya están "
+                "cobradas —y entran en la nómina por sí solas—, o ya estaban "
+                "autorizadas, o siguen en Borrador.")
+
+        motivo = (self.reason or '').strip()
+        if not motivo:
+            raise UserError(
+                "Escriba quién autoriza el pago y por qué. Se está pagando una "
+                "comisión de una factura que el cliente todavía no ha pagado, "
+                "así que conviene que dentro de unos meses se pueda saber de "
+                "dónde salió la decisión.")
+
+        autorizables.write(
+            dict(autorizables._firmar_cambio(motivo), state='paid'))
+
+        _logger.warning(
+            "custom_payroll: %s comisión(es) autorizadas a pagarse sin cobro "
+            "por %s (importe %s). Motivo: %s",
+            len(autorizables), self.env.user.login,
+            sum(autorizables.mapped('commission_amount')), motivo)
         return {'type': 'ir.actions.act_window_close'}
 
     # ------------------------------------------------------------------
@@ -177,15 +244,17 @@ class CommissionSettlementWizard(models.TransientModel):
                 "quien tenga el permiso «Comisiones: corregir estado». "
                 "Pídaselo a un administrador si le corresponde.")
 
-        # Devolver sirve para dos cosas: deshacer una liquidación y traer de
-        # vuelta lo que se apartó. Se resuelven juntas porque para quien lo usa
-        # es el mismo gesto: «esto no debería estar donde está».
-        pospuestas = self.line_ids.filtered(lambda l: l.state == 'out_of_cycle')
+        # Devolver sirve para dos cosas: deshacer una liquidación y revocar
+        # una autorización de pago sin cobro. Se resuelven juntas porque para
+        # quien lo usa es el mismo gesto: «esto no debería estar donde está».
+        autorizadas = self.line_ids.filtered(
+            lambda l: l.settlement_authorized and not l.settlement_date)
         liquidadas = self.line_ids.filtered(lambda l: l.settlement_date)
-        if not liquidadas and not pospuestas:
+        if not liquidadas and not autorizadas:
             raise UserError(
                 "Ninguna de las comisiones seleccionadas está liquidada ni "
-                "pospuesta, así que no hay nada que devolver.")
+                "autorizada a pagar sin cobro, así que no hay nada que "
+                "devolver.")
 
         motivo = (self.reason or '').strip()
         if not motivo:
@@ -196,11 +265,13 @@ class CommissionSettlementWizard(models.TransientModel):
 
         firma = self.line_ids._firmar_cambio(motivo)
 
-        # Lo apartado vuelve a «calculada» y la sincronización lo lleva desde
-        # ahí a donde le toque según sus fechas.
-        solo_pospuestas = pospuestas - liquidadas
-        if solo_pospuestas:
-            solo_pospuestas.write(dict(firma, state='calculated'))
+        # Revocada la autorización, la comisión vuelve al estado que le
+        # corresponde por sus fechas: Por Liquidar si el cliente ya pagó y Por
+        # Cobrar si no. De eso se encarga la sincronización.
+        solo_autorizadas = autorizadas - liquidadas
+        if solo_autorizadas:
+            solo_autorizadas.write(
+                dict(firma, settlement_authorized=False, state='calculated'))
 
         if liquidadas:
             liquidadas.write(
@@ -211,7 +282,7 @@ class CommissionSettlementWizard(models.TransientModel):
         _logger.warning(
             "custom_payroll: %s comisiones devueltas al estado anterior por %s "
             "(importe %s, %s en lotes ya cerrados). Motivo: %s",
-            len(liquidadas) + len(solo_pospuestas), self.env.user.login,
-            sum((liquidadas | solo_pospuestas).mapped('commission_amount')),
+            len(liquidadas) + len(solo_autorizadas), self.env.user.login,
+            sum((liquidadas | solo_autorizadas).mapped('commission_amount')),
             self.closed_count, motivo)
         return {'type': 'ir.actions.act_window_close'}

@@ -17,6 +17,12 @@ REGLAS_POR_DEFECTO = "COMISIONES"
 # en ambos el dinero ya salió, así que los dos liquidan.
 ESTADOS_LIQUIDADOS = ("done", "paid")
 
+# Estados en los que el recibo deja de pagar nada, así que las comisiones que
+# tenía enganchadas vuelven a estar disponibles para otro recibo. Un recibo en
+# borrador entra aquí porque volver a calcularlo las recoge otra vez: soltarlas
+# no pierde nada y evita que se queden ancladas si nadie lo recalcula.
+ESTADOS_LIBERADOS = ("draft", "cancel")
+
 
 class HrPayslip(models.Model):
     """Enlaza el recibo con las comisiones que lo componen.
@@ -126,6 +132,42 @@ class HrPayslip(models.Model):
             if lineas:
                 lineas.write({"settlement_date": False})
 
+    def _release_commission_lines(self):
+        """Suelta las comisiones de un recibo que ya no las va a pagar.
+
+        ``_get_employee_commision`` sella el recibo en cada comisión que
+        recoge, y lo hace ya en borrador: es lo que permite que recalcular no
+        vacíe el recibo. El problema era que nadie lo soltaba nunca. Un recibo
+        que se cancela, o que se devuelve a borrador y se deja ahí, dejaba sus
+        comisiones enganchadas para siempre, y eso hace dos estropicios a la
+        vez:
+
+        * En la lista de comisiones aparecía «nómina de septiembre» sobre
+          facturas que seguían Por Liquidar y que nadie había pagado. Es el
+          mes de nómina prematuro que Recursos Humanos reportó el 29-09-2026.
+        * Peor: ningún recibo posterior las volvía a recoger, porque el
+          dominio descarta lo que ya está en otro recibo. La comisión quedaba
+          en un limbo del que solo se salía a mano.
+
+        Solo se sueltan las que este recibo no llegó a liquidar. Las que
+        tienen fecha de liquidación se quedan donde están: ese dinero salió, y
+        el recibo es la prueba de por dónde.
+        """
+        Comision = self.env["invoice.commission.line"].sudo()
+        for recibo in self:
+            lineas = Comision.search(
+                [("payslip_id", "=", recibo.id), ("settlement_date", "=", False)]
+            )
+            if not lineas:
+                continue
+            lineas.write({"payslip_id": False})
+            _logger.info(
+                "custom_payroll: %s (%s) suelta %s comisión(es) sin liquidar.",
+                recibo.number or recibo.id,
+                recibo.state,
+                len(lineas),
+            )
+
     def write(self, vals):
         """El estado de la comisión sigue al del recibo, venga por donde venga.
 
@@ -148,21 +190,27 @@ class HrPayslip(models.Model):
 
         liquidar = self.browse()
         soltar = self.browse()
+        liberar = self.browse()
         for recibo in self:
             if recibo.state == antes.get(recibo.id):
                 continue
             if recibo.state in ESTADOS_LIQUIDADOS:
                 liquidar |= recibo
-            elif antes.get(recibo.id) in ESTADOS_LIQUIDADOS:
-                # Solo se suelta si venía de estar liquidado. Pasar de borrador
-                # a cancelado no tiene nada que soltar, y buscar por buscar en
-                # cada guardado es trabajo tirado.
+                continue
+            if antes.get(recibo.id) in ESTADOS_LIQUIDADOS:
+                # Solo se quita la fecha si venía de estar liquidado. Pasar de
+                # borrador a cancelado no tiene ninguna fecha que deshacer, y
+                # buscar por buscar en cada guardado es trabajo tirado.
                 soltar |= recibo
+            if recibo.state in ESTADOS_LIBERADOS:
+                liberar |= recibo
 
         if liquidar:
             liquidar._settle_commission_lines()
         if soltar:
             soltar._unsettle_commission_lines()
+        if liberar:
+            liberar._release_commission_lines()
         return res
 
     # ------------------------------------------------------------------

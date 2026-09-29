@@ -8,7 +8,8 @@
             <form string="Cambiar de estado">
                 <field name="line_ids" invisible="1"/>
                 <field name="currency_id" invisible="1"/>
-                <field name="postponed_count" invisible="1"/>
+                <field name="authorized_count" invisible="1"/>
+                <field name="authorizable_count" invisible="1"/>
 
                 <!-- Lo que se va a marcar -->
                 <div class="alert alert-info" role="status"
@@ -36,12 +37,26 @@
                     </span>
                 </div>
 
+                <!-- Pago antes del cobro: no es lo normal, así que se
+                     explica en lugar de dar solo un botón. -->
+                <div class="alert alert-info" role="status"
+                     invisible="authorizable_count == 0">
+                    <field name="authorizable_count" class="oe_inline" readonly="1"/>
+                    de las seleccionadas son de facturas que el cliente
+                    <b>todavía no ha pagado</b>, por
+                    <field name="authorizable_amount" class="oe_inline" readonly="1"/>.
+                    Con <b>Autorizar pago sin cobro</b> entran igualmente en la
+                    nómina del comercial. Hace falta escribir el motivo.
+                </div>
+
                 <group>
                     <field name="settlement_date"
                            invisible="pending_count == 0"/>
+                    <!-- Sin restringir por grupo: el motivo lo necesitan las
+                         dos correcciones, y autorizar un pago antes del cobro
+                         no es trabajo exclusivo de quien corrige estados. -->
                     <field name="reason"
-                           groups="custom_payroll.group_commission_state_manager"
-                           placeholder="Ej.: se marcaron por error en el lote de julio"/>
+                           placeholder="Ej.: pago autorizado por Gerardo antes del recaudo"/>
                 </group>
 
                 <!-- El caso delicado: ese dinero ya salió hacia el comercial -->
@@ -58,16 +73,18 @@
 
                 <div class="alert alert-secondary" role="status"
                      groups="custom_payroll.group_commission_state_manager"
-                     invisible="postponed_count == 0">
-                    <field name="postponed_count" class="oe_inline" readonly="1"/>
-                    de las seleccionadas quedaron <b>apartadas</b> en su día. Con
-                    <b>Devolver al estado anterior</b> vuelven al circuito.
+                     invisible="authorized_count == 0">
+                    <field name="authorized_count" class="oe_inline" readonly="1"/>
+                    de las seleccionadas están <b>autorizadas a pagarse sin que el
+                    cliente haya pagado</b>. Entran en la nómina igual. Con
+                    <b>Devolver al estado anterior</b> se revoca esa autorización.
                 </div>
 
                 <p class="text-muted">
                     Aquí no se escribe el estado a mano: se escriben las fechas y
-                    el estado las sigue. Por eso una comisión no puede quedar en
-                    Liquidada sin fecha de liquidación.
+                    el estado las sigue. La excepción es marcar una comisión como
+                    Liquidada desde la propia lista, que autoriza su pago aunque
+                    el cliente todavía no haya pagado la factura.
                 </p>
 
                 <footer>
@@ -75,11 +92,16 @@
                             string="Marcar como liquidada"
                             class="btn-primary" data-hotkey="q"
                             invisible="pending_count == 0"/>
+                    <button name="action_authorize" type="object"
+                            string="Autorizar pago sin cobro"
+                            class="btn-secondary" data-hotkey="a"
+                            invisible="authorizable_count == 0"
+                            confirm="Estas comisiones se pagarán al comercial aunque el cliente no haya pagado la factura. Quedará registrado su nombre y el motivo. ¿Continuar?"/>
                     <button name="action_revert" type="object"
                             string="Devolver al estado anterior"
                             class="btn-warning" data-hotkey="w"
                             groups="custom_payroll.group_commission_state_manager"
-                            invisible="already_count == 0 and postponed_count == 0"
+                            invisible="already_count == 0 and authorized_count == 0"
                             confirm="Se quitará la fecha de liquidación y las comisiones volverán a entrar en el próximo cálculo de nómina. Quedará registrado su nombre y el motivo. ¿Continuar?"/>
                     <button string="Cancelar" class="btn-secondary"
                             special="cancel" data-hotkey="x"/>
