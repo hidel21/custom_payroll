@@ -13,6 +13,13 @@ LOTES_CERRADOS = ("close", "paid", "done")
 # dos momentos es donde se colaban los cambios.
 RECIBOS_CERRADOS = ("done", "paid")
 
+# Tope de los pagos no constitutivos de salario, en porcentaje del salario
+# básico. Vive como parámetro y no como constante porque el criterio es
+# contable, no técnico: si mañana se mide sobre el total devengado o se cambia
+# la cifra, se ajusta en Ajustes sin tocar una línea de código.
+PARAMETRO_TOPE_NO_SALARIAL = "custom_payroll.tope_no_salarial"
+TOPE_NO_SALARIAL_POR_DEFECTO = 40.0
+
 
 class InvoiceCommissionLine(models.Model):
     """La cara de nómina de una comisión: cuándo y cómo se le paga al comercial.
@@ -451,6 +458,56 @@ class InvoiceCommissionLine(models.Model):
     # ------------------------------------------------------------------
 
     @api.model
+    def _comision_con_tope(self, employee, payslip, basico, otros=0.0):
+        """Reparte la comisión entre lo que cabe bajo el tope y lo que no.
+
+        En Colombia lo que se paga como no constitutivo de salario no puede
+        pasar de un porcentaje del salario. Lo que excede no se deja de pagar:
+        se entrega como anticipo y se cruza más adelante. Es lo que se acordó
+        el 07-10-2026 a raíz de las comisiones de septiembre, donde el
+        excedente se llevó a la cuenta 13652502.
+
+        Devuelve ``(dentro_del_tope, excedente)``. El empleado cobra la suma
+        de los dos: esto no decide cuánto se paga, solo cómo se clasifica.
+
+        Sin salario básico en el recibo no se parte nada, porque sin base no
+        hay tope que calcular. Tampoco se parte si el total es cero o
+        negativo: un ajuste a la baja no es una bonificación.
+
+        Llama dos veces a ``_get_employee_commision`` —una por cada regla
+        salarial que pregunta—, y es seguro: esa función enlaza las comisiones
+        al recibo escribiendo siempre el mismo valor, así que repetirla no
+        cambia nada.
+        """
+        total = otros + self._get_employee_commision(employee, payslip)
+        if total <= 0 or basico <= 0:
+            return total, 0.0
+
+        porcentaje = float(
+            self.env["ir.config_parameter"]
+            .sudo()
+            .get_param(PARAMETRO_TOPE_NO_SALARIAL, TOPE_NO_SALARIAL_POR_DEFECTO)
+        )
+        tope = basico * porcentaje / 100.0
+        if total <= tope:
+            return total, 0.0
+
+        moneda = payslip.company_id.currency_id
+        dentro = moneda.round(tope) if moneda else round(tope, 2)
+        excedente = total - dentro
+        excedente = moneda.round(excedente) if moneda else round(excedente, 2)
+
+        _logger.info(
+            "custom_payroll: %s supera el %s%% del básico (%s de %s). Al "
+            "anticipo van %s.",
+            employee.name,
+            porcentaje,
+            total,
+            basico,
+            excedente,
+        )
+        return dentro, excedente
+
     def _get_employee_commision(self, employee, payslip, state="calculated"):
         """Comisiones que le toca cobrar a este empleado en este recibo.
 

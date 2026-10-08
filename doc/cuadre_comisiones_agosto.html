@@ -1,0 +1,233 @@
+<title>Cuadre de comisiones de agosto</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bitter:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&display=swap">
+
+<style>
+  :root {
+    --paper:#f6f8f7; --sheet:#ffffff; --sunk:#eef2f0;
+    --ink:#16211d; --ink-soft:#3d4b46; --muted:#67766f;
+    --rule:#dbe3df; --rule-firm:#c2cdc8;
+    --accent:#0f6b52; --accent-ink:#0a4c3a; --accent-wash:#e2efe9;
+    --warn:#8a5a06; --warn-wash:#f7ecd6;
+    --danger:#9c2b2b; --danger-wash:#f6dedc;
+    --f-display:"Bitter",Georgia,serif;
+    --f-body:"Source Sans 3",-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
+    --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:#0d1412; --sheet:#151e1b; --sunk:#1d2925;
+      --ink:#e4ebe7; --ink-soft:#c0ccc6; --muted:#8b9a93;
+      --rule:#2b3733; --rule-firm:#3c4a45;
+      --accent:#57c39d; --accent-ink:#8fdcbe; --accent-wash:#17322a;
+      --warn:#e0ac57; --warn-wash:#33280f;
+      --danger:#e08a85; --danger-wash:#361a19;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:#0d1412; --sheet:#151e1b; --sunk:#1d2925;
+    --ink:#e4ebe7; --ink-soft:#c0ccc6; --muted:#8b9a93;
+    --rule:#2b3733; --rule-firm:#3c4a45;
+    --accent:#57c39d; --accent-ink:#8fdcbe; --accent-wash:#17322a;
+    --warn:#e0ac57; --warn-wash:#33280f;
+    --danger:#e08a85; --danger-wash:#361a19;
+  }
+  * { box-sizing:border-box; }
+  body { background:var(--paper); color:var(--ink); font-family:var(--f-body);
+         font-size:16.5px; line-height:1.55; -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:54rem; margin:0 auto; padding:2.75rem 1.5rem 5rem; }
+
+  .head { border-bottom:2px solid var(--ink); padding-bottom:1.3rem; }
+  .eyebrow { font-family:var(--f-mono); font-size:.7rem; letter-spacing:.1em;
+             text-transform:uppercase; color:var(--accent); margin:0 0 .75rem; }
+  h1 { font-family:var(--f-display); font-weight:700;
+       font-size:clamp(1.85rem,4.5vw,2.45rem); line-height:1.08;
+       letter-spacing:-.015em; margin:0 0 .7rem; text-wrap:balance; }
+  .sub { color:var(--ink-soft); margin:0; max-width:38rem; }
+
+  h2 { font-family:var(--f-display); font-weight:600; font-size:1.34rem;
+       margin:2.7rem 0 .3rem; padding-bottom:.4rem;
+       border-bottom:1px solid var(--rule-firm); }
+  h3 { font-family:var(--f-display); font-weight:600; font-size:1.06rem;
+       margin:1.7rem 0 .5rem; }
+  p { margin:0 0 .85rem; max-width:38rem; }
+  strong { font-weight:700; } em { font-style:italic; }
+  .mono, code { font-family:var(--f-mono); font-size:.87em; background:var(--sunk);
+                padding:.08em .35em; border-radius:2px; }
+
+  .scroll { overflow-x:auto; margin:1rem 0 1.3rem; }
+  table { border-collapse:collapse; width:100%; min-width:30rem; font-size:.92rem; }
+  caption { text-align:left; font-family:var(--f-mono); font-size:.68rem;
+            letter-spacing:.09em; text-transform:uppercase; color:var(--muted);
+            padding-bottom:.55rem; }
+  th, td { text-align:left; padding:.5rem .8rem .5rem 0;
+           border-bottom:1px solid var(--rule); vertical-align:top; }
+  thead th { font-size:.7rem; font-weight:700; letter-spacing:.07em;
+             text-transform:uppercase; color:var(--muted);
+             border-bottom:1.5px solid var(--rule-firm); white-space:nowrap; }
+  td.num, th.num { text-align:right; font-variant-numeric:tabular-nums; padding-right:0; }
+  td.acc { font-family:var(--f-mono); font-size:.86rem; white-space:nowrap; }
+  tbody tr:last-child td { border-bottom:none; }
+  tr.total td { border-top:1.5px solid var(--rule-firm); font-weight:700; }
+
+  .nota { padding:.8rem 1rem; margin:1.1rem 0; max-width:38rem;
+          border-left:3px solid; font-size:.95rem; }
+  .nota p:last-child { margin-bottom:0; }
+  .nota b { display:block; font-family:var(--f-mono); font-size:.66rem;
+            letter-spacing:.1em; text-transform:uppercase; margin-bottom:.3rem;
+            font-weight:500; }
+  .nota.ok { background:var(--accent-wash); border-color:var(--accent); }
+  .nota.ok b { color:var(--accent-ink); }
+  .nota.warn { background:var(--warn-wash); border-color:var(--warn); }
+  .nota.warn b { color:var(--warn); }
+  .nota.danger { background:var(--danger-wash); border-color:var(--danger); }
+  .nota.danger b { color:var(--danger); }
+
+  .opcion { border:1px solid var(--rule-firm); background:var(--sheet);
+            padding:1rem 1.1rem; margin:1rem 0; max-width:38rem; }
+  .opcion h3 { margin-top:0; }
+  .opcion .etiqueta { display:inline-block; font-family:var(--f-mono);
+                      font-size:.63rem; letter-spacing:.09em; text-transform:uppercase;
+                      padding:.14rem .45rem; margin-bottom:.5rem;
+                      background:var(--accent-wash); color:var(--accent-ink);
+                      border:1px solid var(--accent); }
+  :root:not([data-theme="light"]) .opcion .etiqueta { color:var(--accent); }
+  .opcion ul { margin:.5rem 0 0; padding-left:1.15rem; }
+  .opcion li { margin-bottom:.3rem; font-size:.95rem; }
+
+  footer { margin-top:3rem; padding-top:1rem; border-top:1px solid var(--rule-firm);
+           font-size:.86rem; color:var(--muted); max-width:38rem; }
+</style>
+
+<div class="wrap">
+
+  <header class="head">
+    <p class="eyebrow">Nómina de agosto de 2026 · My Intelli S.A.S · 17 de septiembre</p>
+    <h1>Cuadre de comisiones de agosto</h1>
+    <p class="sub">Contraste entre los cuadros que envió contabilidad y lo que el sistema liquidó a Óscar Cely y Andrés Caicedo. Qué sobra, qué falta, y qué hay que decidir antes de cerrar septiembre.</p>
+  </header>
+
+  <h2>El resumen</h2>
+
+  <div class="scroll">
+    <table>
+      <caption>Lo enlazado a cada recibo frente al cuadro de contabilidad</caption>
+      <thead>
+        <tr>
+          <th>Empleado</th><th>Recibo</th>
+          <th class="num">Sistema</th><th class="num">Cuadro</th>
+          <th class="num">Importe liquidado</th><th>Diferencia</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Óscar Cely</td><td class="acc">SLIP/114</td>
+          <td class="num">29</td><td class="num">30</td>
+          <td class="num">939.788,08</td><td>falta 1</td>
+        </tr>
+        <tr>
+          <td>Andrés Caicedo</td><td class="acc">SLIP/119</td>
+          <td class="num">24</td><td class="num">21</td>
+          <td class="num">808.199,76</td><td><strong>sobran 4 líneas</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>En los dos casos el importe enlazado coincide <em>exactamente</em> con la línea de comisiones de su recibo. El sistema no se inventó nada: liquidó lo que tenía enlazado.</p>
+
+  <h2>Andrés — cuatro líneas de más</h2>
+
+  <p>Son las dos facturas de <strong>MERCADO ZAPATOCA SA</strong>, con dos conceptos cada una:</p>
+
+  <div class="scroll">
+    <table>
+      <caption>Comisiones que el sistema liquidó y no están en el cuadro</caption>
+      <thead>
+        <tr><th>Factura</th><th>Cliente</th><th class="num">Importe</th><th>Cobrada al cliente</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="acc">FV2638</td><td>MERCADO ZAPATOCA SA</td><td class="num">1.530,80</td><td>28-08-2026</td></tr>
+        <tr><td class="acc">FV2638</td><td>MERCADO ZAPATOCA SA</td><td class="num">4.818,16</td><td>28-08-2026</td></tr>
+        <tr><td class="acc">FV2794</td><td>MERCADO ZAPATOCA SA</td><td class="num">1.559,28</td><td>28-08-2026</td></tr>
+        <tr><td class="acc">FV2794</td><td>MERCADO ZAPATOCA SA</td><td class="num">4.860,24</td><td>28-08-2026</td></tr>
+        <tr class="total"><td colspan="2">Total</td><td class="num">12.768,48</td><td></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="nota warn">
+    <b>La causa, en una línea</b>
+    <p>Las dos facturas se cobraron el <strong>28 de agosto</strong>, tres días después del cierre del 25. El sistema las recogió porque el recibo se recalculó después de esa fecha, y en agosto todavía no existía el bloqueo que lo impide.</p>
+  </div>
+
+  <p>Si se devuelven a <em>Por Liquidar</em>, lo que le correspondía a Andrés en agosto pasa a ser <strong>795.431,28</strong>. Esa cifra coincide al céntimo con la que contabilidad calculó por su cuenta.</p>
+
+  <h2>Óscar — no sobra nada</h2>
+
+  <p>Sus 29 comisiones están todas en el cuadro. La diferencia va al revés: hay una en el cuadro que <strong>no se le liquidó por nómina</strong>.</p>
+
+  <div class="scroll">
+    <table>
+      <caption>La que aparece en el cuadro y no está enlazada al recibo</caption>
+      <thead><tr><th>Factura</th><th>Compañía</th><th class="num">Importe</th><th>Estado</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="acc">INV/2026/07/0005</td>
+          <td>Intelli Next Corp.</td>
+          <td class="num">3,75 USD<br><span style="font-size:.85em;color:var(--muted)">12.591,83 COP</span></td>
+          <td>Liquidada el 28-08, <strong>sin recibo</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="nota danger">
+    <b>Esto responde una pregunta que llevaba semanas abierta</b>
+    <p>Esa comisión figura como <strong>Liquidada con fecha 28 de agosto pero sin ningún recibo detrás</strong>, y el cliente <strong>todavía no ha pagado la factura</strong>. Es el importe de 12.591,83 que aparecía como «bonificación» de Óscar y que nadie sabía de dónde salía.</p>
+    <p>Alguien la marcó como liquidada a mano. Hay que decidir si esos 12.591,83 se le pagaron de verdad por fuera de la nómina —y entonces está bien— o si la marca es un error y hay que deshacerla.</p>
+  </div>
+
+  <h2>Y una que está correctamente fuera</h2>
+
+  <p>En el cuadro de Andrés aparece <span class="mono">FV000184</span>, de Intelli Next C.A, por 697,08 VES (unos 2.846,39 COP). No está enlazada, y <strong>hace bien en no estarlo</strong>: su estado es <em>Por Cobrar</em> — el cliente aún no ha pagado esa factura, así que la comisión todavía no se debe.</p>
+
+  <h2>Lo que hay que decidir</h2>
+
+  <p>Devolver las cuatro líneas de Andrés a <em>Por Liquidar</em> es sencillo. Lo que no es automático es qué pasa con los 12.768,48 que <strong>ya se le pagaron</strong> en el recibo de agosto, que está confirmado y contabilizado.</p>
+
+  <div class="opcion">
+    <span class="etiqueta">Recomendada</span>
+    <h3>Descontarlo en septiembre</h3>
+    <p>Las comisiones vuelven a <em>Por Liquidar</em>, el recibo de agosto se queda como está, y en septiembre se le ajusta a la baja.</p>
+    <ul>
+      <li>No toca nada ya contabilizado.</li>
+      <li>No afecta a la nómina electrónica de agosto, ya generada como NE668.</li>
+      <li>Queda rastro de por qué septiembre viene con un ajuste.</li>
+    </ul>
+  </div>
+
+  <div class="opcion">
+    <h3>Corregir el recibo de agosto</h3>
+    <p>Devolver SLIP/119 a borrador, recalcularlo y rehacer lo que cuelga de él.</p>
+    <ul>
+      <li>Obliga a rehacer su asiento contable.</li>
+      <li>Obliga a regenerar su documento de nómina electrónica, y quema otro consecutivo.</li>
+      <li>Si agosto ya se transmitió a la DIAN, exige nota de ajuste.</li>
+    </ul>
+  </div>
+
+  <h2>Esto ya no puede repetirse</h2>
+
+  <div class="nota ok">
+    <b>Corregido en producción el 16 de septiembre</b>
+    <p>Confirmar el recibo ahora <strong>congela</strong> sus comisiones: ni el recálculo manual ni el proceso automático de la noche pueden moverlas. Se verificó sobre las 238 comisiones enlazadas de producción, y las 238 quedaron protegidas.</p>
+    <p>Una factura cobrada el 28 de agosto ya no se cuela en un recibo confirmado el 25.</p>
+  </div>
+
+  <footer>
+    <p>Datos leídos de producción (<span class="mono">MyIntelli</span>) el 17 de septiembre de 2026. Las cifras de comisión son las convertidas a la moneda de pago del comercial, que es como se liquidan. Hidelberg Martinez, Intelli Next.</p>
+  </footer>
+
+</div>
