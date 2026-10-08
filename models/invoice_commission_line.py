@@ -483,11 +483,31 @@ class InvoiceCommissionLine(models.Model):
         if total <= 0 or basico <= 0:
             return total, 0.0
 
-        porcentaje = float(
+        # Un parámetro lo edita una persona en Ajustes, así que puede quedar
+        # vacío o con un texto. Si no se entiende se usa el 40% y se sigue: un
+        # recibo no puede dejar de calcularse por una casilla mal escrita.
+        crudo = (
             self.env["ir.config_parameter"]
             .sudo()
-            .get_param(PARAMETRO_TOPE_NO_SALARIAL, TOPE_NO_SALARIAL_POR_DEFECTO)
+            .get_param(PARAMETRO_TOPE_NO_SALARIAL)
+            or ""
         )
+        try:
+            porcentaje = float(str(crudo).replace(",", ".").strip())
+        except ValueError:
+            # Sin fijar es lo normal y no merece aviso; con un texto raro sí,
+            # porque significa que alguien lo escribió mal en Ajustes.
+            log = _logger.info if not crudo.strip() else _logger.warning
+            log(
+                "custom_payroll: '%s' no es un porcentaje válido en %s; se "
+                "usa el %s%%.",
+                crudo,
+                PARAMETRO_TOPE_NO_SALARIAL,
+                TOPE_NO_SALARIAL_POR_DEFECTO,
+            )
+            porcentaje = TOPE_NO_SALARIAL_POR_DEFECTO
+        if porcentaje <= 0:
+            porcentaje = TOPE_NO_SALARIAL_POR_DEFECTO
         tope = basico * porcentaje / 100.0
         if total <= tope:
             return total, 0.0
